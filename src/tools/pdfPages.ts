@@ -1,4 +1,5 @@
 import { PDFDocument, ParseSpeeds, degrees } from 'pdf-lib'
+import { admitPdf } from './pdfAdmission'
 import { preflightPdf } from './pdfPreflight'
 import { auditPdf } from './pdfAudit'
 import { pdfPageFingerprinter } from './pdfPageFingerprint'
@@ -23,7 +24,7 @@ export function parsePageSelection(text: string, count: number): number[] {
 }
 export async function loadPageDocument(bytes: Uint8Array): Promise<PDFDocument> {
   if (!(bytes instanceof Uint8Array) || !bytes.length || bytes.length > 8 * 1024 * 1024) pdfFail('输入必须为1字节至8MiB。')
-  const snapshot = new Uint8Array(bytes), raw = preflightPdf(snapshot)
+  const admitted = admitPdf(bytes), snapshot = admitted.bytes, raw = admitted.preflight
   const doc = await PDFDocument.load(snapshot, loadOptions), count = auditPdf(doc, raw), fingerprint = pdfPageFingerprinter(doc)
   if (doc.getPages().length !== count) pdfFail('页数与结构校验不一致。')
   for (const page of doc.getPages()) await fingerprint(page)

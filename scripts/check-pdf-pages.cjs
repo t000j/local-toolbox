@@ -17,7 +17,9 @@ async function main(){
  for(const order of [[],[0],[-1],[1.5],[5],[1,1],Array.from({length:201},(_,i)=>i+1)])await reject(()=>exportPdfPages(bytes,order))
  for(const turns of [[90],[-90,0],[360,0],[45,0],[NaN,0]])await reject(()=>exportPdfPages(bytes,[1,2],turns))
  await reject(()=>inspectPdfPages(new Uint8Array([1,2,3])));await reject(()=>inspectPdfPages(new Uint8Array(8*1024*1024+1)))
- const out='/tmp/local-toolbox-pdf-pages-check';fs.mkdirSync(out,{recursive:true});fs.writeFileSync(out+'/source.pdf',bytes);fs.writeFileSync(out+'/split.pdf',split.bytes)
+ const ordered=await exportPdfPages(bytes,[3,1,4,2]),orderedDoc=await pdf.PDFDocument.load(ordered.bytes,{updateMetadata:false}),orderedHash=pdfPageFingerprinter(orderedDoc);for(const [i,n] of [3,1,4,2].entries())eq(await orderedHash(orderedDoc.getPage(i)),await a(original.getPage(n-1)));eq(ordered.order,[3,1,4,2]);
+ const packed=await source.save({useObjectStreams:true});eq((await exportPdfPages(packed,[3,1,4,2])).order,[3,1,4,2]);
+ const out='/tmp/local-toolbox-pdf-pages-check';fs.mkdirSync(out,{recursive:true});fs.writeFileSync(out+'/source.pdf',bytes);fs.writeFileSync(out+'/split.pdf',split.bytes);fs.writeFileSync(out+'/ordered.pdf',ordered.bytes)
  console.log(`${checks} synthetic PDF selection/identity/boundary checks passed; renderer/UI/native save not invoked`)
 }
 main().catch(e=>{console.error(e);process.exitCode=1})

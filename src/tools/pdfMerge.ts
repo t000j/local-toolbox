@@ -1,4 +1,5 @@
 import { PDFDocument, ParseSpeeds } from 'pdf-lib'
+import { admitPdf, PDF_ADMISSION_LIMITATIONS } from './pdfAdmission'
 import { preflightPdf } from './pdfPreflight'
 import { auditPdf } from './pdfAudit'
 import { pdfPageFingerprinter } from './pdfPageFingerprint'
@@ -6,7 +7,7 @@ import { pdfFail } from './pdfRawSyntax'
 export interface PdfMergeInput { name: string; bytes: Uint8Array }
 export interface PdfMergeResult { bytes: Uint8Array; pages: number; inputs: Array<{ name: string; pages: number }>; warnings: string[] }
 export const PDF_MERGE_LIMITATIONS = [
-  '仅支持经典交叉引用表、直接流长度的静态 PDF 1.0–1.7；对象流、交叉引用流、增量更新及歧义／损坏文件会拒绝，可能拒绝部分合法 PDF。',
+  PDF_ADMISSION_LIMITATIONS,
   '拒绝加密、表单、签名、注释／链接、动作／脚本、附件、外部文件、书签导航、可选层、标签结构及文档级色彩输出意图。',
   '按所选文件及原页序复制页面，保留页面框、旋转、原始内容流和资源；不渲染、不执行脚本、不解压内容流或联网；保留的资源／流仍可能含恶意或损坏载荷，这不是恶意 PDF 检测或净化工具。',
   '不保留文档级元数据、阅读器偏好或文档身份；页面可见内容、字体、图像及页面元数据仍会保留，不能用于匿名化。',
@@ -22,11 +23,13 @@ export async function mergePdfs(inputs: PdfMergeInput[]): Promise<PdfMergeResult
   if (totalBytes > 16 * 1024 * 1024) pdfFail('输入总大小最多 16 MiB。')
   const sources = inputs.map(input => ({ name: input.name, bytes: new Uint8Array(input.bytes) }))
   const output = await PDFDocument.create({ updateMetadata: false }), summaries: PdfMergeResult['inputs'] = [], expected: string[] = []
+  const admissionWarnings: string[] = []
   let totalObjects = 2
   for (const input of sources) {
-    const raw = preflightPdf(input.bytes); totalObjects += raw.objects.size
+    const admitted = admitPdf(input.bytes), raw = admitted.preflight; totalObjects += raw.objects.size
+    if (admitted.normalized) admissionWarnings.push(`${input.name}：已按有界规则展开结构对象流。`)
     if (totalObjects > 6000) pdfFail('合并对象总量超过 6000。')
-    const doc = await PDFDocument.load(input.bytes, loadOptions), count = auditPdf(doc, raw)
+    const doc = await PDFDocument.load(admitted.bytes, loadOptions), count = auditPdf(doc, raw)
     if (expected.length + count > 200) pdfFail('合并总页数最多 200。')
     const fingerprint = pdfPageFingerprinter(doc), pages = doc.getPages()
     if (pages.length !== count) pdfFail('页面遍历与预检数量不一致。')
@@ -40,5 +43,5 @@ export async function mergePdfs(inputs: PdfMergeInput[]): Promise<PdfMergeResult
   if (auditPdf(verified, raw) !== expected.length) pdfFail('保存后页数校验失败。')
   const fingerprint = pdfPageFingerprinter(verified)
   for (const [index, page] of verified.getPages().entries()) if (await fingerprint(page) !== expected[index]) pdfFail(`第 ${index + 1} 页内容、资源或页面属性发生变化。`)
-  return { bytes, pages: expected.length, inputs: summaries, warnings: [...PDF_MERGE_LIMITATIONS] }
+  return { bytes, pages: expected.length, inputs: summaries, warnings: [...PDF_MERGE_LIMITATIONS, ...admissionWarnings] }
 }

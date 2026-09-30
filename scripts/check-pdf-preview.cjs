@@ -1,0 +1,19 @@
+// Synthetic resource gate, bounded inflater and canvas-budget checks. No browser.
+const fs=require('node:fs'),assert=require('node:assert/strict'),ts=require('typescript'),pdf=require('pdf-lib'),zlib=require('node:zlib')
+const cache=new Map();function load(name){if(cache.has(name))return cache.get(name);const e={};cache.set(name,e);new Function('exports','require',ts.transpileModule(fs.readFileSync(`src/tools/${name}.ts`,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(e,id=>id.startsWith('.')?load(id.slice(2)):require(id));return e}
+const {auditPdfPreview}=load('pdfPreviewGate'),{thumbnailSize,previewCanvasFactory}=load('pdfPreviewCanvas');let checks=0;const eq=(a,b)=>{assert.deepEqual(a,b);checks++},bad=(fn,re)=>{assert.throws(fn,re);checks++}
+async function main(){
+ const d=await pdf.PDFDocument.create({updateMetadata:false});d.addPage([100,100]).drawText('SYNTHETIC');const bytes=await d.save({useObjectStreams:false}),doc=await pdf.PDFDocument.load(bytes);auditPdfPreview(doc);checks++
+ for(const filter of ['DCTDecode','JPXDecode','LZWDecode','Crypt']){const test=await pdf.PDFDocument.load(bytes);test.context.register(test.context.stream(new Uint8Array([1]),{Filter:filter}));bad(()=>auditPdfPreview(test),/缩略图/)}
+ const bomb=await pdf.PDFDocument.load(bytes);bomb.context.register(bomb.context.stream(zlib.deflateSync(Buffer.alloc(32*1024*1024+1)),{Filter:'FlateDecode'}));bad(()=>auditPdfPreview(bomb),/超过/)
+ const alias=await pdf.PDFDocument.load(bytes);alias.context.register(alias.context.stream(zlib.deflateSync(Buffer.from('x')),{Filter:'FlateDecode',DP:{Predictor:12,Columns:100000000},DecodeParms:null}));bad(()=>auditPdfPreview(alias),/DP/);
+ const predictor=await pdf.PDFDocument.load(bytes);predictor.context.register(predictor.context.stream(zlib.deflateSync(Buffer.from('x')),{Filter:'FlateDecode',DecodeParms:{Predictor:12}}));bad(()=>auditPdfPreview(predictor),/DecodeParms/)
+ const inline=await pdf.PDFDocument.load(bytes);inline.context.register(inline.context.stream(zlib.deflateSync(Buffer.from('BI /W 1 /H 1 ID x EI')),{Filter:'FlateDecode'}));bad(()=>auditPdfPreview(inline),/BI/);
+ const negative=await pdf.PDFDocument.load(bytes);negative.context.register(negative.context.stream(new Uint8Array([1]),{Subtype:'Image',Width:-1,Height:10}));bad(()=>auditPdfPreview(negative),/尺寸/);
+ for(const key of ['FunctionType','PatternType','ShadingType']){const test=await pdf.PDFDocument.load(bytes);test.context.register(test.context.obj({Nested:{[key]:0,Size:[100000000]}}));bad(()=>auditPdfPreview(test),/过程/)}
+ const hidden=await pdf.PDFDocument.load(bytes);hidden.context.register(hidden.context.stream(new Uint8Array([1]),{Subtype:'Image',Width:1,Height:1,W:100000000,H:100000000}));bad(()=>auditPdfPreview(hidden),/缩写/);
+ const huge=await pdf.PDFDocument.load(bytes);huge.context.register(huge.context.stream(new Uint8Array([1]),{Subtype:'Image',Width:4096,Height:4096}));bad(()=>auditPdfPreview(huge),/尺寸/)
+ eq(thumbnailSize(400,200),{scale:0.64,width:256,height:128});eq(thumbnailSize(200,400),{scale:0.64,width:128,height:256});for(const n of [0,-1,Infinity,NaN,1e12])bad(()=>thumbnailSize(n,200))
+ global.document={createElement:()=>({width:0,height:0,getContext:()=>({})})};const budget=previewCanvasFactory(),factory=new budget.CanvasFactory();const list=Array.from({length:4},()=>factory.create(1024,1024));bad(()=>factory.create(1,1));bad(()=>factory.reset(list[0],2048,2048));factory.destroy(list[0]);eq(list[0].canvas,null);const small=factory.create(10,10);budget.clear();eq(small.canvas.width,0);eq(list[1].canvas.height,0)
+ console.log(`${checks} synthetic PDF preview resource/canvas checks passed; browser rendering not exercised`)
+}main().catch(e=>{console.error(e);process.exitCode=1})

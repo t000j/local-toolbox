@@ -5,6 +5,7 @@ import JsonFormatterTool from './components/JsonFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
+const PdfOrderTool = defineAsyncComponent(() => import('./components/PdfOrderTool.vue'))
 const PdfSplitTool = defineAsyncComponent(() => import('./components/PdfSplitTool.vue'))
 const PdfMergeTool = defineAsyncComponent(() => import('./components/PdfMergeTool.vue'))
 const FaviconTool = defineAsyncComponent(() => import('./components/FaviconTool.vue'))
@@ -594,6 +595,7 @@ export const tools: ToolDefinition[] = [
     tone: 'blue',
     component: BatchRenameTool,
   },
+  { id: 'pdf-order', name: 'PDF 页面排序', description: '分组内容缩略图、调整静态页面顺序并校验另存；当前部分实现。', category: 'files', keywords: ['PDF', '排序', '页面', '缩略图', 'order'], icon: ImageIcon, tone: 'blue', component: PdfOrderTool },
   { id: 'pdf-split', name: 'PDF 页面拆分', description: '按页码范围抽取静态 PDF 页面并安全另存；当前部分实现。', category: 'files', keywords: ['PDF', '拆分', '页面', 'split'], icon: ImageIcon, tone: 'blue', component: PdfSplitTool },
   { id: 'pdf-merge', name: 'PDF 合并', description: '按清单顺序合并受支持的静态 PDF 页面，校验后安全另存；当前部分实现。', category: 'files', keywords: ['PDF', '合并', '页面', 'merge'], icon: ImageIcon, tone: 'blue', component: PdfMergeTool },
   { id: 'favicon', name: 'Favicon 生成器', description: '本地图片生成常见 PNG 尺寸或多图层 ICO，预览后另存。', category: 'files', keywords: ['favicon', '网站图标', 'ICO', 'PNG'], icon: ImageIcon, tone: 'blue', component: FaviconTool },

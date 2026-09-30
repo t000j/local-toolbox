@@ -1,9 +1,9 @@
 // Strict, bounded syntax for classic-xref PDFs; stream bytes are skipped only by a direct /Length.
 export const PDF_MAX_OBJECTS = 6000, PDF_MAX_NODES = 100_000, PDF_MAX_DEPTH = 32
-export function pdfFail(message: string): never { throw new Error(`PDF 无法安全合并：${message}`) }
+export function pdfFail(message: string): never { throw new Error(`PDF 无法安全处理：${message}`) }
 export const pdfWhite = (byte: number | undefined): boolean => byte !== undefined && [0, 9, 10, 12, 13, 32].includes(byte)
 export const pdfDelimiter = (byte: number | undefined): boolean => byte === undefined || pdfWhite(byte) || [40,41,60,62,91,93,123,125,47,37].includes(byte)
-export interface RawValue { kind: string; number?: number; ref?: string; length?: number; root?: string; size?: number }
+export interface RawValue { kind: string; number?: number; ref?: string; length?: number; root?: string; size?: number; name?: string; array?: RawValue[]; dict?: Map<string, RawValue>; encoded?: Uint8Array }
 const forbiddenPreparse = new Set(['ObjStm', 'XRef', 'XRefStm', 'Encrypt', 'Prev'])
 export function rejectStreamNames(bytes: Uint8Array): void {
   // Scan even strings/comments/stream payloads: false positives are preferable to missing a parser decompression path.
@@ -24,7 +24,7 @@ export class PdfRawReader {
   offset = 0
   nodes = 0
   readonly refs = new Set<string>()
-  constructor(readonly bytes: Uint8Array) {}
+  constructor(readonly bytes: Uint8Array, readonly structural = false) {}
   skip(): void {
     while (this.offset < this.bytes.length) {
       if (pdfWhite(this.bytes[this.offset])) this.offset++
@@ -62,13 +62,13 @@ export class PdfRawReader {
       if (!byte || name.length >= 127) pdfFail('名称包含空字符或超过长度上限。')
       name += String.fromCharCode(byte)
     }
-    if (forbiddenPreparse.has(name)) pdfFail(`不支持 ${name}。`)
+    if (forbiddenPreparse.has(name) && !(this.structural && ['ObjStm', 'XRef'].includes(name))) pdfFail(`不支持 ${name}。`)
     return name
   }
   object(depth = 0): RawValue {
     if (depth > PDF_MAX_DEPTH || ++this.nodes > PDF_MAX_NODES) pdfFail('对象嵌套或节点数量超过安全上限。')
     this.skip(); const byte = this.bytes[this.offset]
-    if (byte === 47) { this.name(); return { kind: 'name' } }
+    if (byte === 47) return { kind: 'name', name: this.name() }
     if (byte === 40) {
       const start = this.offset++; let nesting = 1
       while (this.offset < this.bytes.length && nesting) {
@@ -79,7 +79,7 @@ export class PdfRawReader {
         if (nesting > PDF_MAX_DEPTH || this.offset - start > 65536) pdfFail('字符串超过安全上限。')
       }
       if (nesting) pdfFail('字符串未结束。')
-      return { kind: 'string' }
+      return { kind: 'string', encoded: this.structural ? this.bytes.subarray(start, this.offset) : undefined }
     }
     if (byte === 60 && this.bytes[this.offset + 1] !== 60) {
       const start = this.offset++
@@ -89,18 +89,18 @@ export class PdfRawReader {
         if (this.offset - start > 65536) pdfFail('十六进制字符串超过安全上限。')
       }
       if (this.bytes[this.offset++] !== 62) pdfFail('十六进制字符串未结束。')
-      return { kind: 'string' }
+      return { kind: 'string', encoded: this.structural ? this.bytes.subarray(start, this.offset) : undefined }
     }
     if (byte === 91) {
-      this.offset++; this.skip()
-      while (this.bytes[this.offset] !== 93) { this.object(depth + 1); this.skip() }
-      this.offset++; return { kind: 'array' }
+      this.offset++; this.skip(); const array: RawValue[] = []
+      while (this.bytes[this.offset] !== 93) { const value = this.object(depth + 1); if (this.structural) array.push(value); this.skip() }
+      this.offset++; return { kind: 'array', array: this.structural ? array : undefined }
     }
     if (byte === 60 && this.bytes[this.offset + 1] === 60) {
-      this.offset += 2; const keys = new Set<string>(), result: RawValue = { kind: 'dict' }
+      this.offset += 2; const keys = new Set<string>(), result: RawValue = { kind: 'dict', dict: this.structural ? new Map() : undefined }
       while (!this.keyword('>>', false)) {
         const key = this.name(); if (keys.has(key)) pdfFail('字典键重复。'); keys.add(key)
-        const value = this.object(depth + 1)
+        const value = this.object(depth + 1); result.dict?.set(key, value)
         if (key === 'Length' && value.kind === 'number') result.length = value.number
         if (key === 'Root' && value.kind === 'ref') result.root = value.ref
         if (key === 'Size' && value.kind === 'number') result.size = value.number

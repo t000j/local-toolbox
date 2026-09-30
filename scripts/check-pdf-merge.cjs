@@ -1,7 +1,7 @@
 // Synthetic documents only. No browser, network, user files, or renderer is invoked by mergePdfs.
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),ts=require('typescript'),pdf=require('pdf-lib')
 const cache=new Map()
-function load(name){if(cache.has(name))return cache.get(name);const exports={};cache.set(name,exports);const code=ts.transpileModule(fs.readFileSync(path.join('src/tools',`${name}.ts`),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;new Function('exports','require',code)(exports,id=>id==='pdf-lib'?pdf:load(id.replace(/^\.\//,'')));return exports}
+function load(name){if(cache.has(name))return cache.get(name);const exports={};cache.set(name,exports);const code=ts.transpileModule(fs.readFileSync(path.join('src/tools',`${name}.ts`),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;new Function('exports','require',code)(exports,id=>id.startsWith('.')?load(id.replace(/^\.\//,'')):require(id));return exports}
 const {mergePdfs,PDF_MERGE_LIMITATIONS}=load('pdfMerge'),{preflightPdf}=load('pdfPreflight'),{rejectStreamNames}=load('pdfRawSyntax')
 let checks=0
 const eq=(a,b)=>{assert.deepEqual(a,b);checks++},ok=value=>{assert.ok(value);checks++},throws=(fn,re)=>{assert.throws(fn,re);checks++},reject=async(fn,re)=>{await assert.rejects(fn,re);checks++}
@@ -22,7 +22,7 @@ async function main(){
  for(const name of ['ObjStm','XRef','Encrypt','XRefStm','Prev'])for(const encoded of [name,[...name].map(c=>'#'+c.charCodeAt(0).toString(16).toUpperCase()).join(''),[...name].map(c=>'#'+c.charCodeAt(0).toString(16)).join('')])throws(()=>rejectStreamNames(Buffer.from(`% comment\n /${encoded}\n`)))
  const originalLoad=pdf.PDFDocument.load;let calls=0;pdf.PDFDocument.load=async(...args)=>{calls++;return originalLoad.apply(pdf.PDFDocument,args)}
  await reject(()=>mergePdfs([item(rawPdf([...minimal,'<< /Type /#4FbjStm /Length 3 /Filter /FlateDecode >>\nstream\nxxx\nendstream'])),item(second)]),/ObjStm/);eq(calls,0);pdf.PDFDocument.load=originalLoad
- const compressed=await pdf.PDFDocument.create({updateMetadata:false});compressed.addPage();const objectStream=await compressed.save();await reject(()=>mergePdfs([item(objectStream),item(second)]),/ObjStm|XRef/)
+ const compressed=await pdf.PDFDocument.create({updateMetadata:false});compressed.addPage();const objectStream=await compressed.save();eq((await mergePdfs([item(objectStream),item(second)])).pages,2)
  for(const source of [rawPdf([...minimal,'['.repeat(34)+'0'+']'.repeat(34)]),rawPdf([...minimal,'<< /A 1 /A 2 >>']),rawPdf([...minimal,'<< /Length 99 >>\nstream\nx\nendstream']),rawPdf([...minimal,'<< /Length 5 0 R >>\nstream\nx\nendstream','1']),rawPdf([...minimal,'99999 0 R']),rawPdf([...minimal,'('+ '('.repeat(33)+'x'+')'.repeat(33)+')']),rawPdf([...minimal,'('+ 'a'.repeat(65537)+')'])])await reject(()=>mergePdfs([item(source),item(second)]))
  const brokenOffset=Buffer.from(blank);const xref=brokenOffset.indexOf(Buffer.from('0000000009'));ok(xref>=0);brokenOffset[xref+9]=56;await reject(()=>mergePdfs([item(brokenOffset),item(second)]),/偏移/)
  for(const key of ['AcroForm','OpenAction','AA','Names','Outlines','OutputIntents','OCProperties','StructTreeRoot','MarkInfo','Perms','Collection']){const source=await fixture('REJECT',{mutate:doc=>doc.catalog.set(pdf.PDFName.of(key),doc.context.obj({}))});await reject(()=>mergePdfs([item(source),item(second)]))}

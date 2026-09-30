@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
 import { usePdfPageEditor } from '../usePdfPageEditor'
+const PdfPageThumbnails = defineAsyncComponent(() => import('./PdfPageThumbnails.vue'))
 const props = defineProps<{ mode: 'split' | 'order' | 'rotate' }>()
 const { file, pages, order, rotations, selection, acknowledged, saving, notice, inspection, output, choose, inspect, generate, move, rotate, saveOutput, clear } = usePdfPageEditor(props.mode)
 const { busy: inspecting, error: inspectionError } = inspection
@@ -18,7 +19,8 @@ const busy = computed(() => inspecting.value || generating.value)
         <label>导出的页码/范围<input v-model="selection" :disabled="saving || busy" maxlength="2000" placeholder="1-3,5,8-10" /></label>
         <p class="form-hint">英文逗号分隔，单个范围须升序；按填写顺序导出为一份新PDF。重叠/重复/越界拒绝；未选页不会进入输出，可再次选择范围另存其他部分。</p>
       </template>
-      <ol class="page-list"><li v-for="(number, index) in order" :key="number">
+      <PdfPageThumbnails v-if="mode === 'order' && file" :file="file" :pages="pages" :order="order" :disabled="busy || saving" @move="move" />
+      <ol v-else class="page-list"><li v-for="(number, index) in order" :key="number">
         <span>原第 {{ number }} 页 · {{ pages[number - 1]?.width }} × {{ pages[number - 1]?.height }} · {{ pages[number - 1]?.rotation }}°</span>
         <template v-if="mode === 'order'"><button class="secondary-button" :disabled="index === 0 || busy || saving" :aria-label="'上移原第' + number + '页'" @click="move(index, -1)">↑</button><button class="secondary-button" :disabled="index === order.length - 1 || busy || saving" :aria-label="'下移原第' + number + '页'" @click="move(index, 1)">↓</button></template>
         <label v-if="mode === 'rotate'">追加顺时针旋转<select :value="rotations[index]" :disabled="busy || saving" @change="rotate(index, Number(($event.target as HTMLSelectElement).value))"><option :value="0">不变</option><option :value="90">90°</option><option :value="180">180°</option><option :value="270">270°</option></select></label>
@@ -31,7 +33,7 @@ const busy = computed(() => inspecting.value || generating.value)
       <button class="primary-button" :disabled="!acknowledged || saving" @click="saveOutput">{{ saving ? '保存中…' : '另存新PDF（不覆盖）' }}</button>
     </template>
     <p class="form-hint" role="status">{{ error || inspectionError || notice || (busy ? '正在本机处理并校验…' : '') }}</p>
-    <p class="form-hint">当前部分实现：仅支持经典xref静态PDF1.0–1.7；拒绝对象流/交叉引用流、增量更新、加密、表单/签名/注释/链接/动作/脚本/附件/外部引用/目录/分层/标签等结构。不会绕过保护或静默扁平化；不是恶意PDF清洗器，只处理可信来源。此页不嵌入外部阅读器。</p>
+    <p class="form-hint">当前部分实现：支持PDF1.0–1.7经典xref及有界单次保存ObjStm/XRef；拒绝混合/增量xref、间接流长度、加密、表单/签名/注释/链接/动作/脚本/附件/外部引用/目录/分层/标签等结构。不会绕过保护或静默扁平化；不是恶意PDF清洗器，只处理可信来源。此页不嵌入外部阅读器。</p>
     <p class="form-hint">最多200页/输入8MiB/输出16MiB，每次Worker任务30秒；取消/清空/离页终止。保留所选页原内容/资源/框和原角度（旋转操作除外），不保留文档级元数据/身份，页面内容仍可能含隐私。新建保存拒绝覆盖，提交保存后不能撤回。Windows实际界面与原生保存尚未验证。</p>
   </div>
 </template>
