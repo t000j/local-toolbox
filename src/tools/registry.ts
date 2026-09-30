@@ -4,7 +4,6 @@ import type { ToolDefinition } from './types'
 import JsonFormatterTool from './components/JsonFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
-import Base64Tool from './components/Base64Tool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
 import HashTool from './components/HashTool.vue'
 import TimestampTool from './components/TimestampTool.vue'
@@ -55,6 +54,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const Base64Tool = defineAsyncComponent(() => import('./components/Base64Tool.vue'))
 const TextDiffTool = defineAsyncComponent(() => import('./components/TextDiffTool.vue'))
 const RegexTesterTool = defineAsyncComponent(() => import('./components/RegexTesterTool.vue'))
 const MarkdownPreviewTool = defineAsyncComponent(() => import('./components/MarkdownPreviewTool.vue'))
@@ -168,9 +168,9 @@ export const tools: ToolDefinition[] = [
   {
     id: 'base64',
     name: 'Base64 编解码',
-    description: '在本地完成文本的 Base64 编码与解码。',
+    description: '本地完成文本或文件的 Base64 编解码，支持二进制保存。',
     category: 'data',
-    keywords: ['base64', '编码', '解码', '文本'],
+    keywords: ['base64', '编码', '解码', '文本', '文件', '二进制'],
     icon: Binary,
     tone: 'blue',
     component: Base64Tool,
