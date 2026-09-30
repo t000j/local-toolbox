@@ -1,4 +1,5 @@
 import { PDFArray, PDFDict, PDFDocument, PDFName, PDFNull, PDFObject, PDFRawStream, PDFRef } from 'pdf-lib'
+import { inspectPdfImagePredictor, inflatePdfPredictedImage } from './pdfImagePredictors'
 import { boundedInflatePdf } from './pdfBoundedInflate'
 import { auditPdfCmap } from './pdfCmapBudget'
 import { pdfFail } from './pdfRawSyntax'
@@ -55,12 +56,14 @@ export function auditPdfPreview(doc: PDFDocument): void {
     if (filters.length > 1 || filters.some(value => !(value instanceof PDFName) || !['FlateDecode', 'Fl', ...(image ? ['DCTDecode'] : [])].includes(value.decodeText()))) pdfFail('缩略图仅支持原始/单层Flate资源流及已验证的DCTDecode图片。')
     if (dict.has(PDFName.of('DP')) || dict.has(PDFName.of('F'))) pdfFail('缩略图拒绝滤镜/预测器缩写DP/F，避免解析器别名歧义。')
     const params = doc.context.lookup(dict.get(PDFName.of('DecodeParms')))
-    if (params && params !== PDFNull) pdfFail('缩略图暂不支持DecodeParms/图像预测器；不会生成可能不完整的预览。')
+    const predictor = image ? inspectPdfImagePredictor(doc, object, image) : undefined
+    if (!image && params && params !== PDFNull) pdfFail('非图片资源暂不支持DecodeParms。')
     const bytes = object.getContents(), jpeg = filters[0] instanceof PDFName && filters[0].decodeText() === 'DCTDecode'
-    const allowance = Math.min(PDF_PREVIEW_DECODED_BYTES - total, image ? image.byteLength : font ? PDF_PREVIEW_FONT_BYTES : PDF_PREVIEW_DECODED_BYTES)
+    const allowance = Math.min(PDF_PREVIEW_DECODED_BYTES - total, image ? predictor?.encodedBytes ?? image.byteLength : font ? PDF_PREVIEW_FONT_BYTES : PDF_PREVIEW_DECODED_BYTES)
     if (allowance < 0 || allowance === 0 && (bytes.length > 0 || filters.length > 0)) pdfFail('缩略图解压总量超过32MiB。')
     let decoded = bytes, charge = bytes.length
     if (jpeg && image) { inspectPdfPreviewJpeg(bytes, image); charge = image.byteLength }
+    else if (predictor) { decoded = inflatePdfPredictedImage(bytes, predictor, allowance); charge = predictor.encodedBytes }
     else if (filters.length) { decoded = boundedInflatePdf(bytes, allowance); charge = decoded.length }
     if (charge > allowance) pdfFail(font ? '缩略图单个嵌入字体超过4MiB或资源总量超过32MiB。' : '缩略图解压总量或图片字节长度超过上限。')
     if (image) {
