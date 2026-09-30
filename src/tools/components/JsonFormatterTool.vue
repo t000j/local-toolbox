@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { Check, Copy, Minimize2, Sparkles, X } from '@lucide/vue'
 import { copyText } from '../clipboard'
 
-const input = ref('{\n  "name": "本地工具箱",\n  "ready": true,\n  "tools": ["JSON", "Base64", "Hash"]\n}')
+const input = ref('{\n  "name": "LocalToolbox",\n  "ready": true,\n  "tools": ["JSON", "Base64", "Hash"]\n}')
 const output = ref('')
 const error = ref('')
 const copied = ref(false)

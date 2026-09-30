@@ -10,7 +10,7 @@ const npmLock = json('package-lock.json')
 const cargo = readFileSync(path.join(root, 'src-tauri/Cargo.toml'), 'utf8')
 const cargoLock = readFileSync(path.join(root, 'src-tauri/Cargo.lock'), 'utf8')
 const cargoVersion = cargo.match(/^\[package\][\s\S]*?\bversion\s*=\s*"([^"]+)"/m)?.[1]
-const lockVersion = cargoLock.match(/^name = "toolbox-app"\r?\nversion = "([^"]+)"/m)?.[1]
+const lockVersion = cargoLock.match(/^name = "local-toolbox"\r?\nversion = "([^"]+)"/m)?.[1]
 if (!/^\d+\.\d+\.\d+$/.test(pkg.version)) throw new Error('正式发布仅接受 x.y.z 版本号。')
 if ([config.version, npmLock.version, npmLock.packages[''].version, cargoVersion, lockVersion].some((value) => value !== pkg.version)) throw new Error('前端、Tauri 和 Rust 的版本号不一致，请执行 release:version。')
 if (process.env.GITHUB_REF_TYPE === 'tag' && process.env.GITHUB_REF_NAME !== `v${pkg.version}`) throw new Error('Git 标签必须与项目版本号一致。')

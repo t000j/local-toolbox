@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Check, Clock, Copy, Search, Sparkles } from '@lucide/vue'
+import { Check, Clock, Search, Sparkles } from '@lucide/vue'
 import { copyText } from '../clipboard'
 
 type CharacterCategory = 'emoji' | 'arrows' | 'math' | 'currency' | 'punctuation' | 'symbols'

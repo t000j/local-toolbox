@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ArrowDown, ArrowUp, Check, ClipboardCopy, Plus, RotateCcw, Trash, X } from '@lucide/vue'
+import { ArrowDown, ArrowUp, ClipboardCopy, Plus, RotateCcw, X } from '@lucide/vue'
 import { writeText } from '@tauri-apps/plugin-clipboard-manager'
 
 interface QueueItem { id: string; text: string; copied: boolean }

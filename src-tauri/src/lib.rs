@@ -34,6 +34,7 @@ pub fn run() {
             native_windows::get_battery_power,
             native_windows::inspect_file_permissions,
             native_windows::list_local_certificates,
+            native_windows::list_device_drivers,
             local_reports::export_battery_report,
             local_reports::collect_diagnostic_report,
             local_reports::save_local_report,

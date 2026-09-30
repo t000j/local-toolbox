@@ -57,8 +57,13 @@ jobs:
         run: |
           $taskVersion = (Get-Content package.json -Raw | ConvertFrom-Json).version
           $taskTag = 'v' + $taskVersion
-          $taskNotes = & gh api --method POST ('repos/' + $env:GITHUB_REPOSITORY + '/releases/generate-notes') --raw-field ('tag_name=' + $taskTag) --raw-field ('target_commitish=' + $env:GITHUB_SHA) --jq '.body'
-          if ($LASTEXITCODE -ne 0) { throw 'Release notes generation failed.' }
+          $taskNotesPath = Join-Path 'docs/release-notes' ($taskVersion + '.md')
+          if (Test-Path -LiteralPath $taskNotesPath) {
+            $taskNotes = Get-Content -LiteralPath $taskNotesPath -Raw -Encoding utf8
+          } else {
+            $taskNotes = & gh api --method POST ('repos/' + $env:GITHUB_REPOSITORY + '/releases/generate-notes') --raw-field ('tag_name=' + $taskTag) --raw-field ('target_commitish=' + $env:GITHUB_SHA) --jq '.body'
+            if ($LASTEXITCODE -ne 0) { throw 'Release notes generation failed.' }
+          }
           $taskDelimiter = 'NOTES_' + [guid]::NewGuid().ToString('N')
           ('body<<' + $taskDelimiter) | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           'Windows x64：下载 setup.exe 安装。' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
@@ -74,7 +79,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v__VERSION__
-          releaseName: '本地工具箱 v__VERSION__'
+          releaseName: 'LocalToolbox v__VERSION__'
           releaseBody: ${{ steps.release-notes.outputs.body }}
           releaseDraft: true
           prerelease: false

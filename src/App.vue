@@ -130,7 +130,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown); update
       <div class="brand-lockup">
         <div class="brand-mark"><Command :size="19" stroke-width="2.1" /></div>
         <div>
-          <div class="brand-name">本地工具箱</div>
+          <div class="brand-name">LocalToolbox</div>
           <div class="brand-caption">LOCAL TOOLBOX</div>
         </div>
       </div>

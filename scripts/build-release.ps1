@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
 $taskKeyPath = Join-Path $taskRoot '.secrets\updater.key'
 $taskPasswordPath = Join-Path $taskRoot '.secrets\updater-password.txt'

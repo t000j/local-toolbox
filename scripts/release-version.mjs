@@ -15,7 +15,7 @@ const cargoLockPath = path.join(root, 'src-tauri/Cargo.lock')
 const cargo = readFileSync(cargoPath, 'utf8')
 const cargoLock = readFileSync(cargoLockPath, 'utf8')
 const packageSection = /(^\[package\][\s\S]*?\bversion\s*=\s*")[^"]+("[\s\S]*?)(?=^\[|$)/m
-const lockSection = /(^name = "toolbox-app"\r?\nversion = ")[^"]+(")/m
+const lockSection = /(^name = "local-toolbox"\r?\nversion = ")[^"]+(")/m
 if (!packageSection.test(cargo) || !lockSection.test(cargoLock)) throw new Error('无法定位 Rust 项目版本字段，未写入任何文件。')
 pkg.version = version
 config.version = version

@@ -1,5 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    toolbox_app_lib::run();
+    local_toolbox_lib::run();
 }

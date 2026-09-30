@@ -30,6 +30,7 @@ import PasteQueueTool from './components/PasteQueueTool.vue'
 import RegionScreenshotTool from './components/RegionScreenshotTool.vue'
 import ScreenshotAnnotationTool from './components/ScreenshotAnnotationTool.vue'
 import ScreenRulerTool from './components/ScreenRulerTool.vue'
+import DeviceDriversTool from './components/DeviceDriversTool.vue'
 
 import WindowControlTool from './components/WindowControlTool.vue'
 
@@ -452,6 +453,16 @@ export const tools: ToolDefinition[] = [
     icon: Hash,
     tone: 'green',
     component: CertificateViewerTool,
+  },
+  {
+    id: 'device-drivers',
+    name: '设备与驱动清单',
+    description: '查看本机设备状态、驱动版本与提供商，筛选并复制详情。',
+    category: 'system-network',
+    keywords: ['设备', '驱动', '驱动版本', '设备管理器', '硬件', 'PnP', 'device manager'],
+    icon: Monitor,
+    tone: 'blue',
+    component: DeviceDriversTool,
   },
 ]
 

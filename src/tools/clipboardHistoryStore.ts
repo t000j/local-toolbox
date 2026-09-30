@@ -16,7 +16,7 @@ let databasePromise: Promise<IDBDatabase> | null = null
 
 function openDatabase(): Promise<IDBDatabase> {
   if (databasePromise) return databasePromise
-  databasePromise = new Promise((resolve, reject) => {
+  databasePromise = new Promise<IDBDatabase>((resolve, reject) => {
     if (!('indexedDB' in window)) {
       reject(new Error('当前环境不支持本机剪贴板历史存储。'))
       return

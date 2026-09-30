@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Image as TauriImage } from '@tauri-apps/api/image'
 import { readImage, readText, writeImage, writeText } from '@tauri-apps/plugin-clipboard-manager'
-import { Check, Clock, Copy, Image as ImageIcon, Pause, Play, Search, X } from '@lucide/vue'
+import { Check, Copy, Image as ImageIcon, Pause, Play, Search, X } from '@lucide/vue'
 import {
   clearClipboardEntries,
   deleteClipboardEntries,

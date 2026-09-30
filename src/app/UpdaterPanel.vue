@@ -36,7 +36,7 @@ function bytes(value: number): string { return `${(value / 1024 / 1024).toFixed(
 <template>
   <div v-if="open" class="updater-backdrop" @click.self="close">
     <section ref="dialog" class="updater-dialog" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="updater-title" @keydown="onKeydown">
-      <header><div><h2 id="updater-title">关于与更新</h2><p>本地工具箱 · 当前版本 {{ currentVersion }}</p></div><button class="quiet-button" :disabled="status === 'installing'" aria-label="关闭更新窗口" @click="close"><X :size="17" /></button></header>
+      <header><div><h2 id="updater-title">关于与更新</h2><p>LocalToolbox · 当前版本 {{ currentVersion }}</p></div><button class="quiet-button" :disabled="status === 'installing'" aria-label="关闭更新窗口" @click="close"><X :size="17" /></button></header>
       <label class="updater-preference"><input v-model="autoCheck" type="checkbox" :disabled="busy" /> 启动后自动检查更新</label>
       <p v-if="!supported" class="updater-note">浏览器预览和开发模式不检查更新；安装后的正式版本可使用此功能。</p>
       <div class="updater-status" aria-live="polite">

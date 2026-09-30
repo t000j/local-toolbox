@@ -104,3 +104,6 @@ pub async fn list_local_certificates(scope: String, store: String) -> Result<Val
     if !["CurrentUser", "LocalMachine"].contains(&scope.as_str()) || !["My", "Root", "CA"].contains(&store.as_str()) { return Err("请选择受支持的证书存储区".to_owned()); }
     query(include_str!("native_scripts/certificates.ps1"), vec![("TOOLBOX_SCOPE", scope), ("TOOLBOX_STORE", store)]).await
 }
+
+#[tauri::command]
+pub async fn list_device_drivers() -> Result<Value, String> { query(include_str!("native_scripts/devices.ps1"), vec![]).await }
