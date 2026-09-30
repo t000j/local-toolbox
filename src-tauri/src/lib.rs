@@ -1,6 +1,8 @@
 mod file_rename;
 mod disk_tools;
 mod image_conversion;
+mod image_io;
+mod image_codec;
 mod network;
 mod network_probe;
 mod lan_discovery;
