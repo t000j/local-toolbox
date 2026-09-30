@@ -1,6 +1,6 @@
 [package]
 name = "local-toolbox"
-version = "0.1.1"
+version = "0.1.2"
 description = "Lightweight local desktop toolbox"
 license = "MIT"
 edition = "2021"
@@ -24,3 +24,4 @@ base64 = "0.23.1"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+tauri-plugin-single-instance = "2"

@@ -15,7 +15,11 @@ watch(() => props.open, async (open) => {
     previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
     await nextTick()
     dialog.value?.focus()
-  } else { confirming.value = false; previousFocus?.focus() }
+  } else {
+    confirming.value = false
+    if (previousFocus?.isConnected) previousFocus.focus()
+    else document.querySelector<HTMLButtonElement>('.sidebar-update-entry')?.focus()
+  }
 })
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); return }

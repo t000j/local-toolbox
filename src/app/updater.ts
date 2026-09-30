@@ -31,8 +31,15 @@ function readPreference(): boolean {
 
 watch(autoCheck, (value) => {
   try { localStorage.setItem(preferenceKey, String(value)) } catch { /* Keep the setting for this session. */ }
-  if (!value) { window.clearTimeout(startupTimer); startupTimer = undefined }
+  window.clearTimeout(startupTimer)
+  startupTimer = undefined
+  if (value && initialized && supported) scheduleStartupCheck()
 })
+
+function scheduleStartupCheck(): void {
+  window.clearTimeout(startupTimer)
+  startupTimer = window.setTimeout(() => { startupTimer = undefined; void checkNow() }, 3500)
+}
 
 function errorText(cause: unknown): string {
   const detail = typeof cause === 'string' ? cause : cause instanceof Error ? cause.message : String(cause)
@@ -46,7 +53,7 @@ async function initialize(): Promise<void> {
   if (isTauri()) {
     try { currentVersion.value = await getVersion() } catch { /* Use the bundled package version. */ }
   }
-  if (supported && autoCheck.value) startupTimer = window.setTimeout(() => { void checkNow() }, 3500)
+  if (supported && autoCheck.value) scheduleStartupCheck()
 }
 
 async function checkNow(): Promise<void> {

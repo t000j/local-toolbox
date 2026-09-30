@@ -103,7 +103,15 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .version-label { margin-left: auto; color: #b0b3be; font-variant-numeric: tabular-nums; }
 .sidebar-update-entry, .sidebar-version-button { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: transparent; color: #85899a; cursor: pointer; font-size: 10px; }
 .sidebar-update-entry:hover, .sidebar-version-button:hover { color: #6659e8; }
-.sidebar-update-dot { width: 5px; height: 5px; border-radius: 50%; background: #6659e8; }
+.sidebar-update-badge { padding: 2px 5px; border-radius: 4px; background: #efecff; color: #6659e8; font-size: 9px; font-weight: 600; }
+.update-notice { display: flex; align-items: center; gap: 13px; margin: 18px 30px 0; padding: 14px 17px; border: 1px solid #e5dfff; border-radius: 12px; background: #faf9ff; }
+.update-notice-icon { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; border-radius: 10px; background: #eeeaff; color: #6a5ce3; }
+.update-notice-copy { flex: 1; min-width: 0; }
+.update-notice-copy strong { color: #4b436f; font-size: 12px; }
+.update-notice-copy p { margin: 5px 0 0; color: #918ba5; font-size: 11px; line-height: 1.5; }
+.update-notice-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.update-notice-actions .primary-button { min-height: 32px; padding: 7px 12px; font-size: 11px; }
+.update-notice-close { display: grid; place-items: center; padding: 7px; }
 .updater-backdrop { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(26, 29, 46, 0.3); }
 .updater-dialog { display: grid; width: min(480px, 100%); max-height: calc(100vh - 48px); gap: 13px; overflow: auto; padding: 21px; border: 1px solid #e7e6f1; border-radius: 14px; background: #fff; box-shadow: 0 20px 70px rgba(25, 27, 45, 0.18); }
 .updater-dialog header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }

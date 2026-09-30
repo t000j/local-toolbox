@@ -15,6 +15,7 @@ import {
   Sparkles,
   Star,
   Wrench,
+  X,
 } from '@lucide/vue'
 import { categoryLabels, tools } from './tools/registry'
 import type { ToolDefinition } from './tools/types'
@@ -29,7 +30,9 @@ const searchInput = ref<HTMLInputElement | null>(null)
 const favorites = ref<string[]>(readFavorites())
 const updatePanelOpen = ref(false)
 const updater = useUpdater()
-const { currentVersion, latestVersion, updateAvailable } = updater
+const { currentVersion, latestVersion, updateAvailable, status: updateStatus } = updater
+const dismissedUpdateVersion = ref('')
+const updateNoticeVisible = computed(() => updateStatus.value === 'available' && !updatePanelOpen.value && latestVersion.value !== dismissedUpdateVersion.value)
 const activeTool = computed(() => tools.find((tool) => tool.id === activeToolId.value) ?? null)
 
 const visibleTools = computed(() => {
@@ -64,6 +67,10 @@ const pageTitle = computed(() => {
   if (selectedCategory.value === 'favorites') return '我的收藏'
   if (selectedCategory.value === 'all') return '全部工具'
   return categoryLabels[selectedCategory.value]
+})
+
+watch([updatePanelOpen, latestVersion], ([open, version]) => {
+  if (open && version) dismissedUpdateVersion.value = version
 })
 
 watch(
@@ -156,7 +163,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown); update
         <p>常用工具集中管理<br />查找、转换都更顺手</p>
       </div>
       <div class="sidebar-footer">
-        <button class="sidebar-update-entry" @click="updatePanelOpen = true">关于与更新<span v-if="updateAvailable" class="sidebar-update-dot"></span></button>
+        <button class="sidebar-update-entry" @click="updatePanelOpen = true">关于与更新<span v-if="updateAvailable" class="sidebar-update-badge">有更新</span></button>
         <button class="version-label sidebar-version-button" :title="updateAvailable ? `发现新版本 ${latestVersion}` : '查看版本和更新设置'" @click="updatePanelOpen = true">v{{ currentVersion }}</button>
       </div>
     </aside>
@@ -174,6 +181,18 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown); update
           <kbd>Ctrl K</kbd>
         </label>
       </header>
+
+      <section v-if="updateNoticeVisible" class="update-notice" aria-label="软件更新提醒">
+        <div class="update-notice-icon" aria-hidden="true"><ArrowUpRight :size="20" /></div>
+        <div class="update-notice-copy" role="status" aria-live="polite">
+          <strong>发现新版本 {{ latestVersion }}</strong><p>查看更新说明，选择是否下载和安装。</p>
+        </div>
+        <div class="update-notice-actions">
+          <button class="primary-button" @click="updatePanelOpen = true">查看更新</button>
+          <button class="quiet-button" @click="dismissedUpdateVersion = latestVersion">稍后</button>
+          <button class="quiet-button update-notice-close" aria-label="关闭本次启动的更新提醒" @click="dismissedUpdateVersion = latestVersion"><X :size="15" /></button>
+        </div>
+      </section>
 
       <section class="content-area">
         <template v-if="!activeTool">
