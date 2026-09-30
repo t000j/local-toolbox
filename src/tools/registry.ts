@@ -100,8 +100,11 @@ const MonitorInfoTool = defineAsyncComponent(() => import('./components/MonitorI
 
 const FileSearchTool = defineAsyncComponent(() => import('./components/FileSearchTool.vue'))
 
+const DuplicateFilesTool = defineAsyncComponent(() => import('./components/DuplicateFilesTool.vue'))
+
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  { id: 'duplicate-files', name: '重复文件查找', description: '仅在所选文件夹内按大小与完整 SHA-256 查找重复候选。', category: 'files', keywords: ['duplicates', '重复文件', 'sha256', '哈希'], icon: Hash, tone: 'violet', component: DuplicateFilesTool },
   { id: 'file-search', name: '本地文件搜索', description: '仅在所选文件夹内按名称、扩展名、大小与修改时间搜索。', category: 'files', keywords: ['search', '文件搜索', '文件名', '扩展名'], icon: Search, tone: 'blue', component: FileSearchTool },
   { id: 'monitor-info', name: '显示器信息查看', description: '只读查看分辨率、缩放和显示器排列。', category: 'system-network', keywords: ['monitor', '显示器', '屏幕', '缩放', '分辨率'], icon: Monitor, tone: 'blue', component: MonitorInfoTool },
   { id: 'power-actions', name: '电源操作面板', description: '查看影响并确认后锁屏、睡眠、注销、重启或关机。', category: 'system-network', keywords: ['power', '锁屏', '睡眠', '重启', '关机', '注销'], icon: Monitor, tone: 'amber', component: PowerActionsTool },

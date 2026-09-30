@@ -45,6 +45,7 @@ onBeforeUnmount(() => { disposed = true; root.value = '' })
     <p class="form-hint">最多遍历 10,000 项、32 层、合计 1,000 个目录；总时限 30 秒、输出 64 KiB、最多 1,000 条。被占用、无权限、链接或超限项会跳过，结果可能不完整；取消与离页停止扫描。</p>
     <p v-if="mode === 'duplicates'" class="form-hint">按大小及完整 SHA-256 内容哈希分组，只显示至少 2 个匹配路径。每文件最多 64 MiB、总读取最多 512 MiB；无法读取或扫描期间变化的文件跳过。相同哈希是重复候选，不提供清理；同一文件的硬链接别名会跳过，不计算可释放空间。</p>
     <p v-if="result && (snapshot.limited || result.status !== 'completed' || result.exitCode !== 0)" class="form-hint hint-error">结果不完整：存在跳过、权限/读取错误、取消或上限。未显示不代表不存在；重复候选只覆盖成功读取内容的文件。</p>
+    <p v-if="mode === 'duplicates' && result" class="form-hint">已接收 {{ snapshot.rows.length }} 个完整文件摘要；不同内容的同大小文件不会合为一组。</p>
     <p v-if="snapshot.summary" class="form-hint">已遍历 {{ snapshot.summary.visited }} 项 · 跳过 {{ snapshot.summary.skipped }} 项</p>
     <p v-if="snapshot.summary?.reasons.length" class="form-hint">{{ snapshot.summary.reasons.map(scanReason).join('；') }}</p>
     <div class="scan-table"><table><thead><tr><th v-if="mode === 'duplicates'">组</th><th>文件</th><th>大小</th><th>修改时间</th></tr></thead><tbody><tr v-for="r in visible" :key="r.path"><td v-if="mode === 'duplicates'">{{ r.group }}</td><td>{{ r.name }}<details><summary>完整路径{{ r.hash ? '与 SHA-256' : '' }}</summary><p>{{ r.path }}</p><p v-if="r.hash">{{ r.hash }}</p></details></td><td>{{ formatBytes(r.bytes) }}</td><td>{{ formatDate(r.modifiedMs) }}</td></tr></tbody></table></div>

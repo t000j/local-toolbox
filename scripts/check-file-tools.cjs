@@ -41,6 +41,27 @@ ok((compact.length+700)*8/3+300<32767)
 for(const text of ['NtCreateFile','GetFileInformationByHandleEx','SHA256.Create()','FILE_SHARE_READ','OPEN_REPARSE_POINT','visited>=10000','dirs.Count>=1000','parent.depth>=32','rows>=1000','64L*1024*1024','512L*1024*1024','sha.TransformFinalBlock','GetFinalPathNameByHandle','Same(item,Check(h,false),Change(h))']) ok(native.includes(text))
 ok(!/Get-ChildItem|Remove-Item|Move-Item|DeleteFile|WriteFile|Invoke-Expression|Start-Process/.test(native))
 for(const text of ['acquire_job(&job_id)','execute_script(&lease','Duration::from_secs(30)','deny_unknown_fields','Option<i64>','compact_script()']) ok(rust.includes(text))
+// Synthetic in-memory contents only: verifies grouping never uses size/name alone.
+const crypto = require('node:crypto')
+const digest = value => crypto.createHash('sha256').update(value).digest('hex')
+const hashed = [
+  {...file,path:'C:\\fixture\\same-a.txt',hash:digest('same')},
+  {...file,path:'C:\\fixture\\same-b.txt',hash:digest('same')},
+  {...file,path:'C:\\fixture\\other.txt',hash:digest('diff')},
+]
+const grouped = scan.duplicateGroups(hashed)
+eq(grouped.length,1);eq(grouped[0].length,2);ok(grouped[0].every(r=>r.hash===digest('same')))
+eq(scan.duplicateGroups([{...file,bytes:0,hash:digest('')},{...file,path:'other',bytes:0,hash:digest('')}]).length,1)
+eq(parse([{...file,path:'C:\\fixture\\A.txt'},{...file,path:'C:\\fixture\\a.txt'},summary]).rows.length,2)
+eq(parse(Array.from({length:1001},(_,i)=>({...file,path:`C:\\fixture\\${i}`}))).rows.length,1000)
+eq(parse([summary,summary]).limited,true)
+eq(parse([{...summary,failed:true}]).limited,true)
+ok(scan.scanReason('access-denied').includes('拒绝'))
+eq(scan.scanFilters('','','','','1960-01-01','').afterMs,new Date('1960-01-01').getTime())
+for(const date of ['1600-12-31','+010000-01-01T00:00:00Z']) {assert.throws(()=>scan.scanFilters('','','','',date,''));checks++}
+const panelSource = read('src/tools/components/FileScanPanel.vue')
+ok(!/delete_file|remove_file|move_file|remove_item|deleteFile|moveFile/i.test(panelSource))
+ok(read('src/tools/components/DuplicateFilesTool.vue').includes('mode="duplicates"'))
 async function scanLifecycle() {
  const e={},hooks=[]; let pick, invoked=[]
  const task={busy:{value:false},cancelling:{value:false},error:{value:''},result:{value:null},summary:{value:''},clear(){}, async start(command,args){invoked.push({command,args})}}
