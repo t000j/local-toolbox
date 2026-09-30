@@ -3,7 +3,7 @@ import { computed, defineAsyncComponent } from 'vue'
 import { usePdfPageEditor } from '../usePdfPageEditor'
 const PdfPageThumbnails = defineAsyncComponent(() => import('./PdfPageThumbnails.vue'))
 const props = defineProps<{ mode: 'split' | 'order' | 'rotate' }>()
-const { file, pages, order, rotations, selection, acknowledged, saving, notice, inspection, output, choose, inspect, generate, move, rotate, saveOutput, clear } = usePdfPageEditor(props.mode)
+const { file, pages, order, rotations, selection, acknowledged, saving, notice, inspection, output, choose, inspect, generate, move, rotate, rotateAll, saveOutput, clear } = usePdfPageEditor(props.mode)
 const { busy: inspecting, error: inspectionError } = inspection
 const { busy: generating, error, result, cancel } = output
 const busy = computed(() => inspecting.value || generating.value)
@@ -19,16 +19,21 @@ const busy = computed(() => inspecting.value || generating.value)
         <label>导出的页码/范围<input v-model="selection" :disabled="saving || busy" maxlength="2000" placeholder="1-3,5,8-10" /></label>
         <p class="form-hint">英文逗号分隔，单个范围须升序；按填写顺序导出为一份新PDF。重叠/重复/越界拒绝；未选页不会进入输出，可再次选择范围另存其他部分。</p>
       </template>
+      <template v-if="mode === 'rotate'">
+        <p class="form-hint">在原有角度基础上追加顺时针旋转；0°保留原角度，并非强制设为正向。只修改显示旋转，不重采样内容或改变页面框/坐标。可逐页设置，或先批量设置再单独调整。</p>
+        <div class="action-buttons"><button v-for="angle in [0, 90, 180, 270]" :key="angle" class="secondary-button" :disabled="busy || saving" @click="rotateAll(angle)">{{ angle ? '全部追加' + angle + '°' : '全部保持原角度' }}</button></div>
+      </template>
       <PdfPageThumbnails v-if="mode === 'order' && file" :file="file" :pages="pages" :order="order" :disabled="busy || saving" @move="move" />
       <ol v-else class="page-list"><li v-for="(number, index) in order" :key="number">
         <span>原第 {{ number }} 页 · {{ pages[number - 1]?.width }} × {{ pages[number - 1]?.height }} · {{ pages[number - 1]?.rotation }}°</span>
         <template v-if="mode === 'order'"><button class="secondary-button" :disabled="index === 0 || busy || saving" :aria-label="'上移原第' + number + '页'" @click="move(index, -1)">↑</button><button class="secondary-button" :disabled="index === order.length - 1 || busy || saving" :aria-label="'下移原第' + number + '页'" @click="move(index, 1)">↓</button></template>
-        <label v-if="mode === 'rotate'">追加顺时针旋转<select :value="rotations[index]" :disabled="busy || saving" @change="rotate(index, Number(($event.target as HTMLSelectElement).value))"><option :value="0">不变</option><option :value="90">90°</option><option :value="180">180°</option><option :value="270">270°</option></select></label>
+        <label v-if="mode === 'rotate'">追加顺时针旋转<select :value="rotations[index]" :disabled="busy || saving" @change="rotate(index, Number(($event.target as HTMLSelectElement).value))"><option :value="0">不变</option><option :value="90">90°</option><option :value="180">180°</option><option :value="270">270°</option></select> → 最终 {{ ((pages[number - 1]?.rotation ?? 0) + (rotations[index] ?? 0)) % 360 }}°</label>
       </li></ol>
       <button class="primary-button" :disabled="busy || saving" @click="generate">生成并重读校验</button>
     </template>
     <template v-if="result">
       <p class="form-hint">输出 {{ result.pages.length }} 页 · {{ result.bytes.length.toLocaleString() }} 字节 · 原始页码顺序：{{ result.order.join(', ') }}</p>
+      <p v-if="mode === 'rotate'" class="form-hint">最终角度（按页序）：{{ result.pages.map(page => page.rotation + '°').join(', ') }}</p>
       <label><input v-model="acknowledged" type="checkbox" :disabled="saving" />已确认页码/顺序/旋转并理解以下兼容范围</label>
       <button class="primary-button" :disabled="!acknowledged || saving" @click="saveOutput">{{ saving ? '保存中…' : '另存新PDF（不覆盖）' }}</button>
     </template>

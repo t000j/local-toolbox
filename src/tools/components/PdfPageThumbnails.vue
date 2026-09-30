@@ -19,7 +19,9 @@ watch(result, async output => {
   try {
     const blobs = await renderPdfThumbnails(output.bytes, output.pages.length, current.signal)
     if (disposed || revision !== version) return
-    urls.value = blobs.map(blob => URL.createObjectURL(blob))
+    const created: string[] = []
+    try { for (const blob of blobs) created.push(URL.createObjectURL(blob)); urls.value = created }
+    catch (cause) { created.forEach(URL.revokeObjectURL); throw cause }
   } catch (cause) { if (!disposed && revision === version) notice.value = String(cause) }
   finally { if (!disposed && revision === version) rendering.value = false }
 })

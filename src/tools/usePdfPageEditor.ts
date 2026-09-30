@@ -35,6 +35,10 @@ export function usePdfPageEditor(mode: 'split' | 'order' | 'rotate') {
     if (disposed || saving.value || output.busy.value || ![0, 90, 180, 270].includes(value) || !Number.isInteger(index) || index < 0 || index >= pages.value.length) return
     const next = [...rotations.value]; next[index] = value; rotations.value = next
   }
+  function rotateAll(value: number) {
+    if (disposed || saving.value || output.busy.value || inspection.busy.value || ![0, 90, 180, 270].includes(value)) return
+    rotations.value = pages.value.map(() => value)
+  }
   async function saveOutput() {
     const result = output.result.value
     if (disposed || !result || !acknowledged.value || saving.value || output.busy.value) return
@@ -44,5 +48,5 @@ export function usePdfPageEditor(mode: 'split' | 'order' | 'rotate') {
     finally { if (!disposed) saving.value = false }
   }
   onBeforeUnmount(() => { disposed = true; revision++ })
-  return { file, pages, order, rotations, selection, acknowledged, saving, notice, inspection, output, choose, inspect, generate, move, rotate, saveOutput, clear }
+  return { file, pages, order, rotations, selection, acknowledged, saving, notice, inspection, output, choose, inspect, generate, move, rotate, rotateAll, saveOutput, clear }
 }

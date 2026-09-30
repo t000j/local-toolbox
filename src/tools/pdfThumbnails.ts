@@ -22,8 +22,13 @@ export async function renderPdfThumbnails(bytes: Uint8Array, count: number, sign
   // Explicit real Worker port: never allow PDF.js to silently fall back to its main-thread parser.
   const assetController = new AbortController()
   let resourceError: unknown
-  const port = new PdfJsWorker(), worker = PDFWorker.create({ port }), budget = previewCanvasFactory()
-  const task = getDocument({ data: new Uint8Array(bytes), worker, CanvasFactory: budget.CanvasFactory, BinaryDataFactory: localBinaryFactory(cause => { resourceError = cause }, assetController.signal), useWorkerFetch: false, useWasm: false, useSystemFonts: false, disableFontFace: true, enableXfa: false, stopAtErrors: true, maxImageSize: 1_048_576, canvasMaxAreaInBytes: 4_194_304, isOffscreenCanvasSupported: false, isImageDecoderSupported: false, disableAutoFetch: true, disableStream: true, disableRange: true, verbosity: 0 })
+  const port = new PdfJsWorker(), budget = previewCanvasFactory()
+  let worker: PDFWorker
+  try { worker = PDFWorker.create({ port }) } catch (cause) { port.terminate(); throw cause }
+  let task: ReturnType<typeof getDocument>
+  try {
+    task = getDocument({ data: new Uint8Array(bytes), worker, CanvasFactory: budget.CanvasFactory, BinaryDataFactory: localBinaryFactory(cause => { resourceError = cause }, assetController.signal), useWorkerFetch: false, useWasm: false, useSystemFonts: false, disableFontFace: true, enableXfa: false, stopAtErrors: true, maxImageSize: 1_048_576, canvasMaxAreaInBytes: 4_194_304, isOffscreenCanvasSupported: false, isImageDecoderSupported: false, disableAutoFetch: true, disableStream: true, disableRange: true, verbosity: 0 })
+  } catch (cause) { worker.destroy(); port.terminate(); assetController.abort(); budget.clear(); throw cause }
   let rendering: RenderTask | undefined, canvas: HTMLCanvasElement | undefined, totalBytes = 0, stopped = false
   let rejectStop!: (reason: Error) => void
   const stop = new Promise<never>((_, reject) => { rejectStop = reject })

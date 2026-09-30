@@ -19,7 +19,10 @@ async function main(){
  await reject(()=>inspectPdfPages(new Uint8Array([1,2,3])));await reject(()=>inspectPdfPages(new Uint8Array(8*1024*1024+1)))
  const ordered=await exportPdfPages(bytes,[3,1,4,2]),orderedDoc=await pdf.PDFDocument.load(ordered.bytes,{updateMetadata:false}),orderedHash=pdfPageFingerprinter(orderedDoc);for(const [i,n] of [3,1,4,2].entries())eq(await orderedHash(orderedDoc.getPage(i)),await a(original.getPage(n-1)));eq(ordered.order,[3,1,4,2]);
  const packed=await source.save({useObjectStreams:true});eq((await exportPdfPages(packed,[3,1,4,2])).order,[3,1,4,2]);
- const out='/tmp/local-toolbox-pdf-pages-check';fs.mkdirSync(out,{recursive:true});fs.writeFileSync(out+'/source.pdf',bytes);fs.writeFileSync(out+'/split.pdf',split.bytes);fs.writeFileSync(out+'/ordered.pdf',ordered.bytes)
+ const rotated=await exportPdfPages(bytes,[1,2,3,4],[90,180,270,0]),rotDoc=await pdf.PDFDocument.load(rotated.bytes,{updateMetadata:false});eq(rotated.pages.map(p=>p.rotation),[90,270,90,270]);eq(rotDoc.getPages().map(p=>p.getMediaBox()),original.getPages().map(p=>p.getMediaBox()));eq(rotDoc.getPages().map(p=>p.getCropBox()),original.getPages().map(p=>p.getCropBox()));
+ const restored=await exportPdfPages(rotated.bytes,[1,2,3,4],[270,180,90,0]),restoredDoc=await pdf.PDFDocument.load(restored.bytes,{updateMetadata:false}),restoredHash=pdfPageFingerprinter(restoredDoc);for(let i=0;i<4;i++)eq(await restoredHash(restoredDoc.getPage(i)),await a(original.getPage(i)));
+ for(const base of [-450,-90,360,810]){const input=await pdf.PDFDocument.create({updateMetadata:false});input.addPage([100,200]).setRotation(pdf.degrees(base));const data=await input.save({useObjectStreams:false});eq((await exportPdfPages(data,[1],[90])).pages[0].rotation,((base+90)%360+360)%360)}
+ const out='/tmp/local-toolbox-pdf-pages-check';fs.mkdirSync(out,{recursive:true});fs.writeFileSync(out+'/source.pdf',bytes);fs.writeFileSync(out+'/split.pdf',split.bytes);fs.writeFileSync(out+'/ordered.pdf',ordered.bytes);fs.writeFileSync(out+'/rotated.pdf',rotated.bytes)
  console.log(`${checks} synthetic PDF selection/identity/boundary checks passed; renderer/UI/native save not invoked`)
 }
 main().catch(e=>{console.error(e);process.exitCode=1})
