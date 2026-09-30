@@ -36,7 +36,7 @@ onBeforeUnmount(() => { disposed = true; clear() })
       <p>位置 {{ start + i + 1 }} · 原第 {{ number }} 页<br />{{ pages[number - 1]?.width }} × {{ pages[number - 1]?.height }} · {{ pages[number - 1]?.rotation }}°</p>
       <button class="secondary-button" :disabled="start + i === 0 || disabled" :aria-label="'上移原第' + number + '页'" @click="emit('move', start + i, -1)">↑</button><button class="secondary-button" :disabled="start + i === order.length - 1 || disabled" :aria-label="'下移原第' + number + '页'" @click="emit('move', start + i, 1)">↓</button>
     </li></ol>
-    <p class="form-hint">缩略图使用本地PDF.js，按12页一组显式生成；改变顺序后预览清空，按需重新生成。最长边256像素、白底，仅供辨认页序，非色彩/字体保真证明。预览比页面导出更严格：仅支持未压缩/单层Flate流，无DecodeParms，资源解压总量32MiB；BI内联图像/疑似字节、参数别名、蒙版、函数/平铺/渐变、JPEG/JPX等其他压缩资源、额外CMap可能导致预览拒绝或不可用，不用空白图冒充内容。处理原文档仍按全部200页清单，当前分组不会删页。</p>
+    <p class="form-hint">缩略图使用本地PDF.js，按12页一组显式生成；改变顺序后预览清空。最长边256像素、白底，仅供辨认页序，非色彩/字体保真证明。支持经核验的JPEG扫描图、8位灰度/RGB、同尺寸简单透明/1位蒙版及受验证用途的嵌入字体；源图最多4096边长/1200万像素，合计1600万像素。资源样本32MiB、RGBA估算64MiB与活跃画布1600万像素分别限额，不等于总内存32MiB。JPX/CCITT、预测器、内联图、ICC/特殊色彩、复杂蒙版/过程资源及外部CMap仍拒绝；解码缺失不以空白冒充。处理原文档仍按全部200页清单，当前分组不会删页。</p>
   </section>
 </template>
 <style scoped>

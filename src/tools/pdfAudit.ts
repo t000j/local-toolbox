@@ -2,7 +2,7 @@ import { PDFArray, PDFBool, PDFCatalog, PDFDict, PDFDocument, PDFHexString, PDFN
 import type { PdfPreflight } from './pdfPreflight'
 import { PDF_MAX_DEPTH, PDF_MAX_NODES, PDF_MAX_OBJECTS, pdfFail } from './pdfRawSyntax'
 const forbidden = new Set(('AcroForm XFA Sig DocMDP FieldMDP ByteRange Perms DSS VRI JavaScript JS AA OpenAction Launch URI GoTo GoToR GoToE SubmitForm ResetForm ImportData Hide Named SetOCGState Rendition RichMedia RichMediaContent Movie Sound 3D 3DD EmbeddedFile EmbeddedFiles Filespec EF AF Ref OPI Alternates FFilter FDecodeParms Collection OC OCProperties OCG OCMD StructTreeRoot StructParent StructParents StructElem MarkInfo RoleMap ClassMap ParentTree OutputIntents NeedsRendering Names Dests Outlines Threads PresSteps XRef ObjStm Crypt PS PostScript').split(' '))
-const pageKeys = new Set(('Type Parent Resources MediaBox CropBox Rotate Contents BleedBox TrimBox ArtBox UserUnit Group Tabs Metadata Thumb PieceInfo LastModified Annots').split(' '))
+const pageKeys = new Set(('Type Parent Resources MediaBox CropBox Rotate Contents BleedBox TrimBox ArtBox UserUnit Group Tabs Metadata Thumb PieceInfo LastModified Annots Trans').split(' '))
 const treeKeys = new Set(('Type Parent Kids Count Resources MediaBox CropBox Rotate').split(' '))
 export function auditPdf(doc: PDFDocument, preflight: PdfPreflight): number {
   const context = doc.context, objects = context.enumerateIndirectObjects()
@@ -22,6 +22,10 @@ export function auditPdf(doc: PDFDocument, preflight: PdfPreflight): number {
       for (const [name, value] of object.entries()) {
         const key = name.decodeText()
         if (forbidden.has(key) || key === 'A') pdfFail(`不支持 ${key}：交互、附件、导航、签名、层或标签结构。`)
+        if (key === 'Trans') {
+          const transition = context.lookup(value)
+          if (!(transition instanceof PDFDict) || transition.keys().length) pdfFail('仅支持空 Trans 字典；不静默移除页面转场。')
+        }
         if (key === 'Annots') {
           const annots = context.lookup(value)
           if (!(annots instanceof PDFArray) || annots.size()) pdfFail('不支持注释或链接；不会静默移除。')

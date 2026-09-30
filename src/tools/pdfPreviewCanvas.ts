@@ -1,9 +1,10 @@
+import { PDF_PREVIEW_IMAGE_EDGE, PDF_PREVIEW_IMAGE_PIXELS, PDF_PREVIEW_TOTAL_IMAGE_PIXELS } from './pdfPreviewLimits'
 // Per-session intermediate canvas budget; PDF.js still owns parser/decoder allocations.
 export function previewCanvasFactory() {
   const active = new Map<HTMLCanvasElement, number>(); let pixels = 0
   function reserve(canvas: HTMLCanvasElement, width: number, height: number) {
     const count = Math.ceil(width) * Math.ceil(height), next = pixels - (active.get(canvas) ?? 0) + count
-    if (!Number.isFinite(count) || width <= 0 || height <= 0 || width > 2048 || height > 2048 || count > 1_048_576 || next > 4_194_304) throw new Error('缩略图中间画布超出安全预算。')
+    if (!Number.isFinite(count) || width <= 0 || height <= 0 || width > PDF_PREVIEW_IMAGE_EDGE || height > PDF_PREVIEW_IMAGE_EDGE || count > PDF_PREVIEW_IMAGE_PIXELS || next > PDF_PREVIEW_TOTAL_IMAGE_PIXELS) throw new Error('缩略图中间画布超出安全预算。')
     pixels = next; active.set(canvas, count); canvas.width = Math.ceil(width); canvas.height = Math.ceil(height)
   }
   class CanvasFactory {

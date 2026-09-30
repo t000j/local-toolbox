@@ -1,3 +1,5 @@
+import { verifyPdfRenderImages } from './pdfRenderImages'
+import { PDF_PREVIEW_IMAGE_PIXELS } from './pdfPreviewLimits'
 import { AnnotationMode, PDFWorker, getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import type { RenderTask } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import PdfJsWorker from 'pdfjs-dist/legacy/build/pdf.worker.mjs?worker'
@@ -27,7 +29,7 @@ export async function renderPdfThumbnails(bytes: Uint8Array, count: number, sign
   try { worker = PDFWorker.create({ port }) } catch (cause) { port.terminate(); throw cause }
   let task: ReturnType<typeof getDocument>
   try {
-    task = getDocument({ data: new Uint8Array(bytes), worker, CanvasFactory: budget.CanvasFactory, BinaryDataFactory: localBinaryFactory(cause => { resourceError = cause }, assetController.signal), useWorkerFetch: false, useWasm: false, useSystemFonts: false, disableFontFace: true, enableXfa: false, stopAtErrors: true, maxImageSize: 1_048_576, canvasMaxAreaInBytes: 4_194_304, isOffscreenCanvasSupported: false, isImageDecoderSupported: false, disableAutoFetch: true, disableStream: true, disableRange: true, verbosity: 0 })
+    task = getDocument({ data: new Uint8Array(bytes), worker, CanvasFactory: budget.CanvasFactory, BinaryDataFactory: localBinaryFactory(cause => { resourceError = cause }, assetController.signal), useWorkerFetch: false, useWasm: false, useSystemFonts: false, disableFontFace: true, enableXfa: false, stopAtErrors: true, maxImageSize: PDF_PREVIEW_IMAGE_PIXELS, canvasMaxAreaInBytes: PDF_PREVIEW_IMAGE_PIXELS * 4, isOffscreenCanvasSupported: false, isImageDecoderSupported: false, disableAutoFetch: true, disableStream: true, disableRange: true, verbosity: 0 })
   } catch (cause) { worker.destroy(); port.terminate(); assetController.abort(); budget.clear(); throw cause }
   let rendering: RenderTask | undefined, canvas: HTMLCanvasElement | undefined, totalBytes = 0, stopped = false
   let rejectStop!: (reason: Error) => void
@@ -48,6 +50,7 @@ export async function renderPdfThumbnails(bytes: Uint8Array, count: number, sign
       rendering.onContinue = (next: () => void) => { if (stopped || signal.aborted) rendering?.cancel(); else setTimeout(next, 0) }
       await wait(rendering.promise)
       if (resourceError) throw resourceError
+      verifyPdfRenderImages(page)
       const blob = await wait(new Promise<Blob>((resolve, reject) => canvas!.toBlob(value => value ? resolve(value) : reject(new Error('缩略图编码失败。')), 'image/png')))
       totalBytes += blob.size; if (totalBytes > 4 * 1024 * 1024) throw new Error('缩略图总输出超过4MiB。')
       blobs.push(blob); canvas.width = canvas.height = 0; canvas = undefined; page.cleanup(); rendering = undefined

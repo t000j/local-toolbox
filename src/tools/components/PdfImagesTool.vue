@@ -47,8 +47,8 @@ onBeforeUnmount(() => { disposed = true; clear() })
       <ol class="image-list"><li v-for="(image, index) in result.images" :key="image.page"><img :src="urls[index]" :alt="'原第' + image.page + '页输出预览'" /><p>原第{{ image.page }}页 · {{ image.width }}×{{ image.height }} · {{ image.bytes.length.toLocaleString() }}字节</p><button class="secondary-button" :disabled="saving" @click="saveImage(index)">另存此页（不覆盖）</button></li></ol>
     </template>
     <p class="form-hint" role="status">{{ notice || (busy ? '隔离线程正在校验、绘制和编码…' : '') }}</p>
-    <p class="form-hint">部分实现：共用静态PDF限制，渲染另拒绝JPEG/JPX等输入压缩资源、预测器/参数别名、BI内联图像/疑似字节、蒙版、函数/渐变/平铺、额外CMap及DOM滤镜等；受限文件会报错，不生成空白替代。字体/颜色近似，PNG无损仅指已绘制像素。输出格式为JPEG不等于支持任意嵌入JPEG的源文档。</p>
-    <p class="form-hint">输入8MiB/原文档200页；每页最多400万像素/4096边长，每批1600万像素/32MiB输出，超限请减页数或DPI，不静默缩小。解压资源32MiB预检，整个解析/渲染/编码在单独可终止Worker内，30秒超时，不支持Worker内OffscreenCanvas/DOMMatrix时明确失败，不退回界面线程。取消/离页释放线程和预览URL；仅加载应用内字体，不访问文档外部资源、不执行脚本。Windows实际界面/保存未验证。</p>
+    <p class="form-hint">部分实现：支持经尺寸/分量核验的JPEG扫描图、灰度/RGB、同尺寸简单透明/1位蒙版和受验证用途的嵌入字体。仍拒绝JPX/CCITT/LZW、预测器、参数别名、内联图、ICC/特殊色彩、复杂蒙版/过程资源、外部CMap及DOM滤镜；绘制资源解码失败时拒绝发布空白替代。字体/颜色仍可能近似，PNG无损仅指已绘制像素。</p>
+    <p class="form-hint">输入8MiB/原文档200页；每页最多400万像素/4096边长，每批1600万像素/32MiB输出，超限请减页数或DPI，不静默缩小。源图最多1200万像素/4096边长、总1600万像素；解压样本/字体32MiB、RGBA估算64MiB与活跃画布1600万像素分别限制，解析/编码复制仍可使峰值达到数百MiB。这不是总内存硬上限。整个解析/渲染/编码在单独可终止Worker内，30秒超时，不支持Worker内OffscreenCanvas/DOMMatrix时明确失败，不退回界面线程。取消/离页释放线程和预览URL；仅加载应用内字体，不访问文档外部资源、不执行脚本。Windows实际界面/保存未验证。</p>
   </div>
 </template>
 <style scoped>

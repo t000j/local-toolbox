@@ -1,3 +1,4 @@
+import { PDF_PREVIEW_IMAGE_PIXELS } from './pdfPreviewLimits'
 // Imported only by the dedicated, terminable text worker in production.
 import 'pdfjs-dist/legacy/build/pdf.worker.mjs'
 import { PDFWorker, getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
@@ -32,7 +33,7 @@ export async function extractPdfText(bytes: Uint8Array, selection: string) {
     }
   }
   const worker = PDFWorker.create({})
-  const task = getDocument({ data: prepared, worker, BinaryDataFactory, useWorkerFetch: false, useWasm: false, useSystemFonts: false, disableFontFace: true, enableXfa: false, stopAtErrors: true, isOffscreenCanvasSupported: false, isImageDecoderSupported: false, disableAutoFetch: true, disableStream: true, disableRange: true, verbosity: 0 })
+  const task = getDocument({ data: prepared, worker, BinaryDataFactory, useWorkerFetch: false, useWasm: false, useSystemFonts: false, disableFontFace: true, enableXfa: false, stopAtErrors: true, maxImageSize: PDF_PREVIEW_IMAGE_PIXELS, canvasMaxAreaInBytes: PDF_PREVIEW_IMAGE_PIXELS * 4, isOffscreenCanvasSupported: false, isImageDecoderSupported: false, disableAutoFetch: true, disableStream: true, disableRange: true, verbosity: 0 })
   try {
     const doc = await task.promise, accumulator = textAccumulator(), result: PdfTextPage[] = []
     if (doc.numPages !== count) throw new Error('解析器页数不一致。')
