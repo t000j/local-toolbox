@@ -5,6 +5,7 @@ import JsonFormatterTool from './components/JsonFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
+const ImageMetadataStripTool = defineAsyncComponent(() => import('./components/ImageMetadataStripTool.vue'))
 const ImageMetadataTool = defineAsyncComponent(() => import('./components/ImageMetadataTool.vue'))
 const ImageCropTool = defineAsyncComponent(() => import('./components/ImageCropTool.vue'))
 const ImageResizeTool = defineAsyncComponent(() => import('./components/ImageResizeTool.vue'))
@@ -587,6 +588,7 @@ export const tools: ToolDefinition[] = [
     tone: 'blue',
     component: BatchRenameTool,
   },
+  { id: 'image-metadata-strip', name: '图片元数据清除', description: '移除 PNG/JPEG 常见隐私元数据，保留像素、方向和必要颜色信息，预览后另存。', category: 'files', keywords: ['图片', '元数据清除', '隐私', 'GPS', 'EXIF'], icon: ImageIcon, tone: 'blue', component: ImageMetadataStripTool },
   { id: 'image-metadata', name: '图片元数据查看', description: '只读查看 PNG/JPEG 尺寸、颜色声明及有限 EXIF/GPS 字段。', category: 'files', keywords: ['元数据', 'EXIF', 'GPS', '色彩空间', 'metadata'], icon: ImageIcon, tone: 'blue', component: ImageMetadataTool },
   { id: 'image-crop', name: '图片裁切、旋转与翻转', description: '按方向校正后的坐标裁切、顺时针旋转及翻转，预览后另存。', category: 'files', keywords: ['裁切', '旋转', '翻转', 'crop'], icon: ImageIcon, tone: 'blue', component: ImageCropTool },
   { id: 'image-resize', name: '图片尺寸调整', description: '单张或批量按像素、比例缩放，预览后另存 PNG。', category: 'files', keywords: ['图片', '缩放', '尺寸', 'resize'], icon: ImageIcon, tone: 'blue', component: ImageResizeTool },

@@ -23,3 +23,11 @@ Their older path is different from the new editor: input limits are 100 MiB / 40
 Run `node scripts/check-image-{headers,geometry,worker,lifecycle}.cjs` individually, followed by `npx vue-tsc --noEmit`, `npm run build`, `npm run release:check` and `git diff --check`. Tests use synthetic bytes and mocks only; they do not read user pictures or invoke a native save. Parser fixtures include generated encoder samples when documented in the check script.
 
 Cloud Chromium inventory exists, but opening the local test app using the supported CUA browser route returned `net::ERR_BLOCKED_BY_CLIENT`; no alternate access/security bypass was attempted. Thus actual Canvas pixels, WebView codec behavior, visual UI and Windows save dialogs remain unverified. Windows Rust/FFI compilation also remains unverified. This source batch does not change the shipped 0.1.2 release (41 tools).
+
+## Metadata removal (tool 56)
+
+This is container-level removal for supported static PNG/JPEG, not rasterization. It removes common EXIF/GPS/camera/time, XMP, IPTC, comments, PNG text, thumbnails and unsupported nonessential metadata blocks. Compressed pixels, JPEG coding tables/scans, PNG critical/transparency chunks and retained color chunks are compared byte-for-byte before returning a result. A second parse checks format, dimensions, orientation and EXIF ColorSpace.
+
+The minimal rewritten EXIF contains only non-default Orientation and/or ColorSpace. PNG pHYs, supported color/display chunks, JPEG JFIF density (without its thumbnail), Adobe transform and ICC profiles are preserved for display meaning. ICC bytes are intentionally not rewritten and can contain identifying information. Visible content, steganography and filenames are not cleaned. The save UI requires acknowledging this scope; it does not promise anonymity or removal of every private fact.
+
+APNG/MPO, unsupported HDR chunks/transfer codes, malformed metadata, incomplete ICC segments and unsupported EXIF color declarations without an ICC profile are rejected. Bounds remain 16 MiB, 8192 pixels per edge and 16 million pixels, with a 10-second terminable Worker. `scripts/check-image-strip.cjs` performs 3,098 synthetic assertions, including critical-payload identity and idempotence; actual displayed colors, browser UI and native save remain unverified.
