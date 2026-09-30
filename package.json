@@ -9,7 +9,6 @@
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "tauri": "tauri",
-    "docs:sync": "node scripts/sync-product-plan.mjs",
     "release:version": "node scripts/release-version.mjs",
     "release:check": "node scripts/check-release.mjs",
     "release:build": "powershell -NoProfile -File scripts/build-release.ps1"

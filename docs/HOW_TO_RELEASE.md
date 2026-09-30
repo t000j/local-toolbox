@@ -21,7 +21,7 @@ cd E:\codexProject\toolbox-app
 git status --short
 ```
 
-先核对修改范围。工具实现、注册和产品规划应同步；项目根目录的“本地工具箱-产品规划与技术选型.md”是规划源文档，docs/PRODUCT_PLAN.md 是它的镜像，两份都随源码提交。独立克隆仓库后也能直接修改源文档并运行 docs:sync。
+先核对修改范围。工具实现、注册和产品规划应保持一致；直接修改项目根目录的“本地工具箱-产品规划与技术选型.md”，并随源码提交即可。
 
 ## 2. 同步新的版本号
 
@@ -47,10 +47,9 @@ npm run release:version -- 0.1.3
 
 仓库已经准备了 0.1.3 的设置备份与恢复说明。发布前按实际改动核对，之后新增功能也要补进该文件。下一个版本则新建相应的版本文件。
 
-同步产品规划并检查发布配置：
+更新根目录产品规划后，检查发布配置：
 
 ```powershell
-npm run docs:sync
 npm run release:check
 ```
 
@@ -83,7 +82,7 @@ E:\codexProject\toolbox-app\src-tauri\target\x86_64-pc-windows-msvc\release\bund
 
 ## 5. 提交并推送版本相关源码
 
-在 Git 客户端中，仅选中本次工具代码、版本文件、产品规划镜像和更新说明，核对差异后提交。保留其他任务的修改，不使用 git add . 混入全部文件；私钥、node_modules、dist 和 target 不进入提交。
+在 Git 客户端中，仅选中本次工具代码、版本文件、根目录产品规划和更新说明，核对差异后提交。保留其他任务的修改，不使用 git add . 混入全部文件；私钥、node_modules、dist 和 target 不进入提交。
 
 也可以直接让 Codex 处理这一阶段，例如：
 
@@ -149,7 +148,7 @@ Actions 会使用已有的 TAURI_SIGNING_PRIVATE_KEY 和 TAURI_SIGNING_PRIVATE_K
 
 ## 9. 同步发布记录
 
-发布和用户验证完成后，更新 README、产品规划和 docs/RELEASING.md 中的版本、Release 链接及实际验证结果，然后运行 npm run docs:sync。文档记录单独提交并推送 main，不需要重新触发已发布版本的构建。
+发布和用户验证完成后，直接更新 README、根目录产品规划和 docs/RELEASING.md 中的版本、Release 链接及实际验证结果。文档记录单独提交并推送 main，不需要重新触发已发布版本的构建。
 
 不能把“构建通过”写成“升级已验证”。分别记录本机打包、GitHub 构建、公开下载和客户端实际操作的结果。
 

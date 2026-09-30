@@ -28,7 +28,7 @@
 - 更新签名私钥及密码保存在被 Git 忽略的 `.secrets/` 中，对应的 GitHub Actions Secrets 已配置，源码仓库只包含公钥。
 - [LocalToolbox 0.1.2](https://github.com/t000j/local-toolbox/releases/tag/v0.1.2) 已正式发布，安装包、更新签名及 latest.json 可公开下载；已安装的英文版 0.1.0 / 0.1.1 可在“关于与更新”检查更新。
 
-详见 [发布与更新指南](docs/RELEASING.md)、[产品规划](本地工具箱-产品规划与技术选型.md)。规划源文档位于项目根目录，修改后运行 `npm run docs:sync` 同步到 docs/PRODUCT_PLAN.md。
+详见 [发布与更新指南](docs/RELEASING.md)、[产品规划](本地工具箱-产品规划与技术选型.md)。直接维护项目根目录这一份规划文档，并随代码提交。
 
 准备自己发布新版本时，按 [新版本发布教程](docs/HOW_TO_RELEASE.md) 操作；教程包含版本同步、更新说明、源码推送、Actions 构建、正式发布和旧版更新验证。
 

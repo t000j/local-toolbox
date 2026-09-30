@@ -63,7 +63,6 @@ GitHub Actions 使用两个仓库级 Secrets：
 
 ```text
 npm run release:version -- 0.1.3
-npm run docs:sync
 ```
 
 `release:version` 同步 `package.json`、`package-lock.json`、`tauri.conf.json`、`Cargo.toml`、`Cargo.lock` 中的应用版本。审核并提交这批版本文件后，创建 `v0.1.3` 标签并推送，工作流会建立相应 Release 草稿。标签必须与文件中的版本一致。
@@ -96,9 +95,9 @@ npm run release:build
 
 更新签名用于验证安装包来自该项目，与 Windows Authenticode 发布者签名不同。目前未配置付费的 Windows 发布者证书；SmartScreen 是否提示还取决于 Windows 的签名与信誉判断。
 
-## 文档同步
+## 文档维护
 
-项目根目录的 `本地工具箱-产品规划与技术选型.md` 是产品规划源文档；执行 `npm run docs:sync` 复制为 `docs/PRODUCT_PLAN.md`，两份文档都纳入 Git。原开发机外层工作目录的同名文件作为留存副本，后续以项目根目录的源文档为准。
+直接维护项目根目录的 `本地工具箱-产品规划与技术选型.md`，并随本次代码或发布记录提交，不需要文档同步脚本。
 
 ## 当前验证边界
 
