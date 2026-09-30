@@ -443,7 +443,7 @@ pub struct ProbeExecution {
 
 /// Common bounded runner for fixed executables, validated argument lists and
 /// deadlines, with identical ownership and cancellation for Ping and traceroute.
-fn execute_probe(
+pub(crate) fn execute_probe(
     lease: &JobLease,
     executable: &str,
     args: &[String],

@@ -82,7 +82,7 @@ async function main() {
   ok(env.includes('Sensitive-Name')); ok(env.includes('Protected-Name')); ok(env.includes('Missing existing variable'))
   ok(!env.includes('DeleteValue')); ok(!env.includes('CreateSubKey')); ok(!env.includes('SetEnvironmentVariable'))
   const registry = fs.readFileSync('src/tools/registry.ts', 'utf8')
-  eq((registry.match(/id: '/g) || []).length, 70)
+  eq((registry.match(/id: '/g) || []).length, 71)
   console.log(`${checks} parser, mocked lifecycle and static safety assertions passed. Windows native tests NOT run.`)
 }
 main().catch(error => { console.error(error); process.exitCode = 1 })
