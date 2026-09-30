@@ -1,9 +1,10 @@
-// Strict, bounded syntax for classic-xref PDFs; stream bytes are skipped only by a direct /Length.
+// Strict, bounded syntax. Only the Length reference span is retained for byte-preserving admission.
 export const PDF_MAX_OBJECTS = 6000, PDF_MAX_NODES = 100_000, PDF_MAX_DEPTH = 32
 export function pdfFail(message: string): never { throw new Error(`PDF 无法安全处理：${message}`) }
 export const pdfWhite = (byte: number | undefined): boolean => byte !== undefined && [0, 9, 10, 12, 13, 32].includes(byte)
 export const pdfDelimiter = (byte: number | undefined): boolean => byte === undefined || pdfWhite(byte) || [40,41,60,62,91,93,123,125,47,37].includes(byte)
-export interface RawValue { kind: string; number?: number; ref?: string; length?: number; root?: string; size?: number; name?: string; array?: RawValue[]; dict?: Map<string, RawValue>; encoded?: Uint8Array }
+export interface RawBudget { nodes: number }
+export interface RawValue { kind: string; number?: number; ref?: string; length?: number; lengthRef?: { ref: string; start: number; end: number }; root?: string; size?: number; name?: string; array?: RawValue[]; dict?: Map<string, RawValue>; encoded?: Uint8Array }
 const forbiddenPreparse = new Set(['ObjStm', 'XRef', 'XRefStm', 'Encrypt', 'Prev'])
 export function rejectStreamNames(bytes: Uint8Array): void {
   // Scan even strings/comments/stream payloads: false positives are preferable to missing a parser decompression path.
@@ -24,7 +25,7 @@ export class PdfRawReader {
   offset = 0
   nodes = 0
   readonly refs = new Set<string>()
-  constructor(readonly bytes: Uint8Array, readonly structural = false) {}
+  constructor(readonly bytes: Uint8Array, readonly structural = false, readonly budget?: RawBudget, readonly allowStructuralNames = structural) {}
   skip(): void {
     while (this.offset < this.bytes.length) {
       if (pdfWhite(this.bytes[this.offset])) this.offset++
@@ -62,11 +63,12 @@ export class PdfRawReader {
       if (!byte || name.length >= 127) pdfFail('名称包含空字符或超过长度上限。')
       name += String.fromCharCode(byte)
     }
-    if (forbiddenPreparse.has(name) && !(this.structural && ['ObjStm', 'XRef'].includes(name))) pdfFail(`不支持 ${name}。`)
+    if (forbiddenPreparse.has(name) && !(this.allowStructuralNames && ['ObjStm', 'XRef'].includes(name))) pdfFail(`不支持 ${name}。`)
     return name
   }
   object(depth = 0): RawValue {
     if (depth > PDF_MAX_DEPTH || ++this.nodes > PDF_MAX_NODES) pdfFail('对象嵌套或节点数量超过安全上限。')
+    if (this.budget && ++this.budget.nodes > PDF_MAX_NODES) pdfFail('预解析与对象节点总数超过安全上限。')
     this.skip(); const byte = this.bytes[this.offset]
     if (byte === 47) return { kind: 'name', name: this.name() }
     if (byte === 40) {
@@ -100,8 +102,9 @@ export class PdfRawReader {
       this.offset += 2; const keys = new Set<string>(), result: RawValue = { kind: 'dict', dict: this.structural ? new Map() : undefined }
       while (!this.keyword('>>', false)) {
         const key = this.name(); if (keys.has(key)) pdfFail('字典键重复。'); keys.add(key)
-        const value = this.object(depth + 1); result.dict?.set(key, value)
+        this.skip(); const start = this.offset, value = this.object(depth + 1); result.dict?.set(key, value)
         if (key === 'Length' && value.kind === 'number') result.length = value.number
+        if (key === 'Length' && value.kind === 'ref') result.lengthRef = { ref: value.ref!, start, end: this.offset }
         if (key === 'Root' && value.kind === 'ref') result.root = value.ref
         if (key === 'Size' && value.kind === 'number') result.size = value.number
       }

@@ -24,6 +24,26 @@ export function readStartXref(bytes: Uint8Array): number {
   if (!Number.isSafeInteger(offset) || offset < 8 || offset >= bytes.length) pdfFail('末尾 startxref 无效；不自动恢复。')
   return offset
 }
+export function readPdfEnd(reader: PdfRawReader, startXref: number): void {
+  const bytes = reader.bytes
+  reader.expect('startxref'); if (reader.unsigned() !== startXref) pdfFail('startxref 不匹配。')
+  while (pdfWhite(bytes[reader.offset])) reader.offset++
+  if (String.fromCharCode(...bytes.subarray(reader.offset, reader.offset + 5)) !== '%%EOF') pdfFail('缺少最终 EOF。')
+  reader.offset += 5; while (pdfWhite(bytes[reader.offset])) reader.offset++
+  if (reader.offset !== bytes.length) pdfFail('不支持增量更新或尾随内容。')
+}
+export function readPdfStream(reader: PdfRawReader, length: number): Uint8Array {
+  const bytes = reader.bytes; reader.expect('stream')
+  if (bytes[reader.offset] === 13) { reader.offset++; if (bytes[reader.offset] === 10) reader.offset++ }
+  else if (bytes[reader.offset] === 10) reader.offset++
+  else pdfFail('stream 缺少标准换行。')
+  if (!Number.isSafeInteger(length) || length < 0 || length > bytes.length - reader.offset) pdfFail('流长度无效或越界。')
+  const stream = bytes.subarray(reader.offset, reader.offset + length); reader.offset += length
+  if (bytes[reader.offset] === 13) { reader.offset++; if (bytes[reader.offset] === 10) reader.offset++ }
+  else if (bytes[reader.offset] === 10) reader.offset++
+  if (bytes[reader.offset] !== 101) pdfFail('Length 未精确指向 endstream 边界。')
+  reader.expect('endstream'); return stream
+}
 export function readStreamRecords(bytes: Uint8Array, startXref: number): { records: PdfRecord[]; nodes: number } {
   const reader = new PdfRawReader(bytes, true), records: PdfRecord[] = [], ids = new Set<number>(); reader.offset = 8
   while (!reader.keyword('startxref', false)) {
@@ -34,20 +54,11 @@ export function readStreamRecords(bytes: Uint8Array, startXref: number): { recor
     if (reader.keyword('stream', false)) {
       const length = value.length
       if (value.kind !== 'dict' || length === undefined || !Number.isSafeInteger(length) || length < 0) pdfFail('结构准入要求直接流长度。')
-      reader.expect('stream')
-      if (bytes[reader.offset] === 13) { reader.offset++; if (bytes[reader.offset] === 10) reader.offset++ }
-      else if (bytes[reader.offset] === 10) reader.offset++
-      else pdfFail('stream 缺少标准换行。')
-      if (length > bytes.length - reader.offset) pdfFail('流越界。')
-      stream = bytes.subarray(reader.offset, reader.offset + length); reader.offset += length; reader.expect('endstream')
+      stream = readPdfStream(reader, length)
     }
     const body = bytes.subarray(start, reader.offset); reader.expect('endobj')
     records.push({ id, generation, offset, body, value, stream })
   }
-  reader.expect('startxref'); if (reader.unsigned() !== startXref) pdfFail('startxref 不匹配。')
-  while (pdfWhite(bytes[reader.offset])) reader.offset++
-  if (String.fromCharCode(...bytes.subarray(reader.offset, reader.offset + 5)) !== '%%EOF') pdfFail('缺少最终 EOF。')
-  reader.offset += 5; while (pdfWhite(bytes[reader.offset])) reader.offset++
-  if (reader.offset !== bytes.length) pdfFail('不支持增量更新或尾随内容。')
+  readPdfEnd(reader, startXref)
   return { records, nodes: reader.nodes }
 }

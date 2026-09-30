@@ -108,6 +108,31 @@ try {
   const brokenPdf = new Uint8Array(await brokenDoc.save({ useObjectStreams: false }))
   const brokenPrepared = await preparePdfRaster(brokenPdf, { ...options, pages: [1] })
   await assert.rejects(() => renderPreparedPdfRaster(brokenPrepared.bytes, { ...options, pages: [1] }), /静默省略/); checks++
+  // Combine the new resource roles with one-hop Length normalization without
+  // rewriting any source stream bytes; this is only a generated-fixture builder.
+  function indirectLengths(bytes) {
+    const classic = load('pdfClassicRecords').readClassicRecords(bytes), encoder = new TextEncoder()
+    const records = classic.records.map(record => ({ ...record })); let next = Math.max(...records.map(record => record.id)) + 1
+    for (const record of [...records]) if (record.stream) {
+      const reader = new (load('pdfRawSyntax').PdfRawReader)(record.body, true); reader.object()
+      const prefix = new TextDecoder('latin1').decode(record.body.subarray(0, reader.offset))
+      const changed = prefix.replace(/\/Length\s+[0-9]+(?=\s|>)/, `/Length ${next} 0 R`)
+      assert.notEqual(changed, prefix)
+      record.body = new Uint8Array(Buffer.concat([Buffer.from(changed, 'latin1'), record.body.subarray(reader.offset)]))
+      records.push({ id: next++, generation: 0, offset: 0, body: encoder.encode(String(record.stream.length)), value: { kind: 'number', number: record.stream.length } })
+    }
+    return load('pdfCanonical').canonicalPdf(records, classic.trailer)
+  }
+  for (const [name, bytes] of [['scan', source], ['font', fontSource]]) {
+    const indirect = indirectLengths(bytes), admitted = load('pdfAdmission').admitPdf(indirect)
+    ok(admitted.normalized); write(`${name}-indirect.pdf`, indirect); write(`${name}-admitted.pdf`, admitted.bytes)
+    const normalized = await loadPageDocument(indirect); auditPdfPreview(normalized); checks++
+    const selected = await preparePdfRaster(indirect, { ...options, pages: [1] })
+    const result = await renderPreparedPdfRaster(selected.bytes, { ...options, pages: [1] })
+    eq(Buffer.from(result.images[0].bytes), fs.readFileSync(`${out}/${name === 'scan' ? 'scan-page-1' : 'font-page'}.png`))
+    for (const suffix of ['indirect', 'admitted']) execFileSync('pdftoppm', ['-f', '1', '-singlefile', '-r', '72', '-png', `${out}/${name}-${suffix}.pdf`, `${out}/${name}-${suffix}`])
+    eq(fs.readFileSync(`${out}/${name}-indirect.png`), fs.readFileSync(`${out}/${name}-admitted.png`))
+  }
   const transition = await pdf.PDFDocument.load(fontSource); transition.getPage(0).node.set(pdf.PDFName.of('Trans'), transition.context.obj({ S: 'Dissolve' }))
   await assert.rejects(() => transition.save({ useObjectStreams: false }).then(bytes => loadPageDocument(bytes)), /Trans/); checks++
   console.log(`${checks} actual PDF.js scan/mask/font/text and independent Poppler preservation checks passed. Synthetic fixtures only; browser/Windows untested.`)

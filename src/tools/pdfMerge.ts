@@ -27,7 +27,7 @@ export async function mergePdfs(inputs: PdfMergeInput[]): Promise<PdfMergeResult
   let totalObjects = 2
   for (const input of sources) {
     const admitted = admitPdf(input.bytes), raw = admitted.preflight; totalObjects += raw.objects.size
-    if (admitted.normalized) admissionWarnings.push(`${input.name}：已按有界规则展开结构对象流。`)
+    if (admitted.normalized) admissionWarnings.push(...admitted.warnings.filter(warning => warning !== PDF_ADMISSION_LIMITATIONS).map(warning => `${input.name}：${warning}`))
     if (totalObjects > 6000) pdfFail('合并对象总量超过 6000。')
     const doc = await PDFDocument.load(admitted.bytes, loadOptions), count = auditPdf(doc, raw)
     if (expected.length + count > 200) pdfFail('合并总页数最多 200。')
