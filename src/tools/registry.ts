@@ -55,6 +55,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const MarkdownPreviewTool = defineAsyncComponent(() => import('./components/MarkdownPreviewTool.vue'))
 const SqlFormatterTool = defineAsyncComponent(() => import('./components/SqlFormatterTool.vue'))
 const CsvViewerTool = defineAsyncComponent(() => import('./components/CsvViewerTool.vue'))
 const XmlFormatterTool = defineAsyncComponent(() => import('./components/XmlFormatterTool.vue'))
@@ -131,6 +132,16 @@ export const tools: ToolDefinition[] = [
     icon: Braces,
     tone: 'blue',
     component: SqlFormatterTool,
+  },
+  {
+    id: 'markdown',
+    name: 'Markdown 预览器',
+    description: '本机编辑 Markdown 并安全预览，可复制净化后的 HTML。',
+    category: 'data',
+    keywords: ['markdown', 'md', '预览', '编辑', 'html'],
+    icon: Pencil,
+    tone: 'violet',
+    component: MarkdownPreviewTool,
   },
   {
     id: 'base64',
