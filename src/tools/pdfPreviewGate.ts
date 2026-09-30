@@ -12,7 +12,7 @@ export function auditPdfPreview(doc: PDFDocument): void {
     if (value instanceof PDFRawStream) { checkProcedural(value.dict, depth + 1); return }
     if (value instanceof PDFArray) { value.asArray().forEach(child => checkProcedural(child, depth + 1)); return }
     if (value instanceof PDFDict) {
-      for (const key of ['FunctionType', 'PatternType', 'ShadingType']) if (value.has(PDFName.of(key))) pdfFail(`缩略图暂不支持${key}过程资源，避免未界定的采样/平铺分配。`)
+      for (const key of ['FunctionType', 'PatternType', 'ShadingType', 'SMask', 'Mask']) if (value.has(PDFName.of(key))) pdfFail(`缩略图暂不支持${key}过程资源，避免未界定的采样/平铺分配。`)
       value.values().forEach(child => checkProcedural(child, depth + 1))
     }
   }

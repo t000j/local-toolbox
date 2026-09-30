@@ -10,7 +10,7 @@ async function main(){
  const predictor=await pdf.PDFDocument.load(bytes);predictor.context.register(predictor.context.stream(zlib.deflateSync(Buffer.from('x')),{Filter:'FlateDecode',DecodeParms:{Predictor:12}}));bad(()=>auditPdfPreview(predictor),/DecodeParms/)
  const inline=await pdf.PDFDocument.load(bytes);inline.context.register(inline.context.stream(zlib.deflateSync(Buffer.from('BI /W 1 /H 1 ID x EI')),{Filter:'FlateDecode'}));bad(()=>auditPdfPreview(inline),/BI/);
  const negative=await pdf.PDFDocument.load(bytes);negative.context.register(negative.context.stream(new Uint8Array([1]),{Subtype:'Image',Width:-1,Height:10}));bad(()=>auditPdfPreview(negative),/尺寸/);
- for(const key of ['FunctionType','PatternType','ShadingType']){const test=await pdf.PDFDocument.load(bytes);test.context.register(test.context.obj({Nested:{[key]:0,Size:[100000000]}}));bad(()=>auditPdfPreview(test),/过程/)}
+ for(const key of ['FunctionType','PatternType','ShadingType','SMask','Mask']){const test=await pdf.PDFDocument.load(bytes);test.context.register(test.context.obj({Nested:{[key]:0,Size:[100000000]}}));bad(()=>auditPdfPreview(test),/过程/)}
  const hidden=await pdf.PDFDocument.load(bytes);hidden.context.register(hidden.context.stream(new Uint8Array([1]),{Subtype:'Image',Width:1,Height:1,W:100000000,H:100000000}));bad(()=>auditPdfPreview(hidden),/缩写/);
  const huge=await pdf.PDFDocument.load(bytes);huge.context.register(huge.context.stream(new Uint8Array([1]),{Subtype:'Image',Width:4096,Height:4096}));bad(()=>auditPdfPreview(huge),/尺寸/)
  eq(thumbnailSize(400,200),{scale:0.64,width:256,height:128});eq(thumbnailSize(200,400),{scale:0.64,width:128,height:256});for(const n of [0,-1,Infinity,NaN,1e12])bad(()=>thumbnailSize(n,200))

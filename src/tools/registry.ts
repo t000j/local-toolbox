@@ -5,6 +5,7 @@ import JsonFormatterTool from './components/JsonFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
+const PdfCompressionTool = defineAsyncComponent(() => import('./components/PdfCompressionTool.vue'))
 const PdfRotateTool = defineAsyncComponent(() => import('./components/PdfRotateTool.vue'))
 const PdfOrderTool = defineAsyncComponent(() => import('./components/PdfOrderTool.vue'))
 const PdfSplitTool = defineAsyncComponent(() => import('./components/PdfSplitTool.vue'))
@@ -596,6 +597,7 @@ export const tools: ToolDefinition[] = [
     tone: 'blue',
     component: BatchRenameTool,
   },
+  { id: 'pdf-compress', name: 'PDF 图片压缩', description: '有损重编码受支持的内嵌图片，保留文字/页面并比较实际体积；当前部分实现。', category: 'files', keywords: ['PDF', '压缩', '图片', 'quality', 'compress'], icon: ImageIcon, tone: 'blue', component: PdfCompressionTool },
   { id: 'pdf-rotate', name: 'PDF 页面旋转', description: '按页或批量追加直角旋转，校验保留页面内容后另存；当前部分实现。', category: 'files', keywords: ['PDF', '旋转', '页面', 'rotate'], icon: ImageIcon, tone: 'blue', component: PdfRotateTool },
   { id: 'pdf-order', name: 'PDF 页面排序', description: '分组内容缩略图、调整静态页面顺序并校验另存；当前部分实现。', category: 'files', keywords: ['PDF', '排序', '页面', '缩略图', 'order'], icon: ImageIcon, tone: 'blue', component: PdfOrderTool },
   { id: 'pdf-split', name: 'PDF 页面拆分', description: '按页码范围抽取静态 PDF 页面并安全另存；当前部分实现。', category: 'files', keywords: ['PDF', '拆分', '页面', 'split'], icon: ImageIcon, tone: 'blue', component: PdfSplitTool },
