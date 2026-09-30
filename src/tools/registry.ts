@@ -54,6 +54,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const UrlCodecTool = defineAsyncComponent(() => import('./components/UrlCodecTool.vue'))
 const Base64Tool = defineAsyncComponent(() => import('./components/Base64Tool.vue'))
 const TextDiffTool = defineAsyncComponent(() => import('./components/TextDiffTool.vue'))
 const RegexTesterTool = defineAsyncComponent(() => import('./components/RegexTesterTool.vue'))
@@ -174,6 +175,16 @@ export const tools: ToolDefinition[] = [
     icon: Binary,
     tone: 'blue',
     component: Base64Tool,
+  },
+  {
+    id: 'url-codec',
+    name: 'URL 编解码',
+    description: '转换 URL 参数、完整 URI 或表单字段，明确区分加号与空格。',
+    category: 'data',
+    keywords: ['url', 'uri', '编码', '解码', '百分号', '参数', '表单'],
+    icon: Globe,
+    tone: 'blue',
+    component: UrlCodecTool,
   },
   {
     id: 'uuid',
