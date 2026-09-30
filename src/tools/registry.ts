@@ -5,6 +5,7 @@ import JsonFormatterTool from './components/JsonFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
+const PdfMetadataTool = defineAsyncComponent(() => import('./components/PdfMetadataTool.vue'))
 const PdfTextTool = defineAsyncComponent(() => import('./components/PdfTextTool.vue'))
 const ImagePdfTool = defineAsyncComponent(() => import('./components/ImagePdfTool.vue'))
 const PdfImagesTool = defineAsyncComponent(() => import('./components/PdfImagesTool.vue'))
@@ -600,6 +601,7 @@ export const tools: ToolDefinition[] = [
     tone: 'blue',
     component: BatchRenameTool,
   },
+  { id: 'pdf-metadata', name: 'PDF 元数据查看', description: '只读文档属性、页数及原始Metadata文本，安全显示；当前部分实现。', category: 'files', keywords: ['PDF', '元数据', '标题', '属性', 'metadata'], icon: ImageIcon, tone: 'blue', component: PdfMetadataTool },
   { id: 'pdf-text', name: 'PDF 文本提取', description: '提取已有文字并按页导出UTF-8，隔离线程处理；当前部分实现，不做OCR。', category: 'files', keywords: ['PDF', '文字', '文本', '提取', 'text'], icon: ImageIcon, tone: 'blue', component: PdfTextTool },
   { id: 'images-pdf', name: '图片转 PDF', description: '按顺序将PNG/JPEG方向校正、等比排版为PDF，选择纸张/边距/透明度并安全另存。', category: 'files', keywords: ['PDF', '图片', 'PNG', 'JPEG', '合成', 'A4'], icon: ImageIcon, tone: 'blue', component: ImagePdfTool },
   { id: 'pdf-images', name: 'PDF 转图片', description: '在隔离线程按页/DPI生成 PNG 或 JPEG，逐页安全另存；当前部分实现。', category: 'files', keywords: ['PDF', '图片', 'PNG', 'JPEG', 'DPI'], icon: ImageIcon, tone: 'blue', component: PdfImagesTool },
