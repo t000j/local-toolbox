@@ -12,6 +12,7 @@ mod environment_manager;
 mod hosts_editor;
 mod firewall_viewer;
 mod power_actions;
+mod monitor_info;
 mod local_reports;
 mod native_windows;
 mod screenshot;
@@ -53,6 +54,7 @@ pub fn run() {
             hosts_editor::manage_hosts,
             firewall_viewer::run_firewall_snapshot,
             power_actions::run_power_action,
+            monitor_info::read_monitor_info,
             network_probe::prepare_network_probe,
             network_probe::run_dns_query,
             network_probe::run_dns_cache,

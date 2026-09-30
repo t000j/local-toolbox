@@ -96,8 +96,11 @@ const FirewallViewerTool = defineAsyncComponent(() => import('./components/Firew
 
 const PowerActionsTool = defineAsyncComponent(() => import('./components/PowerActionsTool.vue'))
 
+const MonitorInfoTool = defineAsyncComponent(() => import('./components/MonitorInfoTool.vue'))
+
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  { id: 'monitor-info', name: '显示器信息查看', description: '只读查看分辨率、缩放和显示器排列。', category: 'system-network', keywords: ['monitor', '显示器', '屏幕', '缩放', '分辨率'], icon: Monitor, tone: 'blue', component: MonitorInfoTool },
   { id: 'power-actions', name: '电源操作面板', description: '查看影响并确认后锁屏、睡眠、注销、重启或关机。', category: 'system-network', keywords: ['power', '锁屏', '睡眠', '重启', '关机', '注销'], icon: Monitor, tone: 'amber', component: PowerActionsTool },
   { id: 'firewall-viewer', name: '防火墙规则查看', description: '只读搜索 Windows 防火墙规则与筛选条件。', category: 'system-network', keywords: ['firewall', '防火墙', '规则', '端口'], icon: Monitor, tone: 'blue', component: FirewallViewerTool },
   { id: 'hosts-editor', name: 'Hosts 文件查看与编辑', description: '预览差异，确认后备份并保存 Hosts；检测外部冲突。', category: 'system-network', keywords: ['hosts', '域名映射', '备份'], icon: Monitor, tone: 'blue', component: HostsEditorTool },
