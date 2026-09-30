@@ -1,7 +1,7 @@
 import { ArrowLeftRight, Barcode, Binary, Braces, Calculator as CalculatorIcon, CalendarDays, Camera, Clipboard, ClipboardCopy, ClipboardPaste, ClipboardPlus, Clock, FolderOpen, Globe, Hash, Image as ImageIcon, ListFilter, Minimize2, Monitor, Pencil, Percent, QrCode, Ruler, Search, Server, Sparkles, Timer as TimerIcon, Wifi } from '@lucide/vue'
+import { defineAsyncComponent } from 'vue'
 import type { ToolDefinition } from './types'
 import JsonFormatterTool from './components/JsonFormatterTool.vue'
-import XmlFormatterTool from './components/XmlFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
 import Base64Tool from './components/Base64Tool.vue'
@@ -55,6 +55,9 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const XmlFormatterTool = defineAsyncComponent(() => import('./components/XmlFormatterTool.vue'))
+const YamlFormatterTool = defineAsyncComponent(() => import('./components/YamlFormatterTool.vue'))
+
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
   {
@@ -96,6 +99,16 @@ export const tools: ToolDefinition[] = [
     icon: Braces,
     tone: 'violet',
     component: XmlFormatterTool,
+  },
+  {
+    id: 'yaml',
+    name: 'YAML 格式化与校验',
+    description: '校验并格式化 YAML 1.2，安全互转 JSON。',
+    category: 'data',
+    keywords: ['yaml', 'yml', 'json', '格式化', '缩进', '校验', '转换'],
+    icon: Braces,
+    tone: 'blue',
+    component: YamlFormatterTool,
   },
   {
     id: 'base64',
