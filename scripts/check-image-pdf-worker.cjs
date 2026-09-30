@@ -1,0 +1,13 @@
+// Worker/Canvas/bitmap protocol mocks only; no real decoder or user images.
+const fs=require('node:fs'),ts=require('typescript'),assert=require('node:assert/strict');let checks=0;const eq=(a,b)=>{assert.deepEqual(a,b);checks++}
+function setup(fail=false){const canvases=[],bitmaps=[],outputs=[],normalized=[];let fills=0
+ class Canvas{constructor(w,h){this.width=w;this.height=h;canvases.push(this)}getContext(){return {fillStyle:'',fillRect(){fills++},drawImage(){}}}async convertToBlob({type}){if(fail)throw new Error('encoder failed');return new Blob([new Uint8Array([1,2])],{type})}}
+ const self={postMessage:reply=>outputs.push(reply)},bitmap=async(blob,options)=>{eq(options.imageOrientation,'from-image');const orientation=new Uint8Array(await blob.arrayBuffer())[0],b={width:orientation>=5?2:4,height:orientation>=5?4:2,closed:false,close(){this.closed=true}};bitmaps.push(b);return b}
+ const modules={imagePdf:{buildImagePdf:async(images,options)=>{normalized.push(...images);return {bytes:new Uint8Array([1]),pages:images,encoding:options.encoding}}},imagePdfGeometry:{checkImagePdfOptions(){}},imageProcessing:{validateImageFiles:files=>{if(!files.length||files.length>8)throw Error('count')}},imageHeaders:{parseImageHeader:bytes=>({format:'jpeg',width:4,height:2,orientation:bytes[0],animated:false})}}
+ new Function('exports','require','self','OffscreenCanvas','createImageBitmap',ts.transpileModule(fs.readFileSync('src/tools/imagePdf.worker.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)({},id=>modules[id.slice(2)],self,Canvas,bitmap)
+ return {run:data=>self.onmessage({data}),canvases,bitmaps,outputs,normalized,get fills(){return fills}}}
+const file=orientation=>({name:`synthetic-${orientation}.jpg`,size:1,arrayBuffer:async()=>new Uint8Array([orientation]).buffer})
+async function main(){const a=setup();await a.run({files:Array.from({length:8},(_,i)=>file(i+1)),options:{encoding:'png',quality:80}});eq(a.outputs[0].ok,true);eq(a.normalized.map(x=>[x.width,x.height]),[[4,2],[4,2],[4,2],[4,2],[2,4],[2,4],[2,4],[2,4]]);eq(a.bitmaps.every(b=>b.closed),true);eq(a.canvases.every(c=>c.width===0&&c.height===0),true);eq(a.fills,0)
+ const b=setup();await b.run({files:[file(1)],options:{encoding:'jpeg',quality:50}});eq(b.fills,1);eq(b.normalized[0].format,'jpeg');const c=setup(true);await c.run({files:[file(1)],options:{encoding:'png',quality:80}});eq(c.outputs[0].ok,false);eq(c.bitmaps[0].closed,true);eq(c.canvases[0].width,0);eq(c.normalized.length,0)
+ console.log(`${checks} mocked image-PDF EXIF orientation-option/dimension/alpha-mode/cleanup checks passed; actual mirrored pixels and browser decoding remain untested`)
+}main().catch(e=>{console.error(e);process.exitCode=1})

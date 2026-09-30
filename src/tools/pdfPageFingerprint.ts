@@ -5,7 +5,7 @@ async function digest(bytes: Uint8Array): Promise<string> {
   const result = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes).buffer)
   return Array.from(new Uint8Array(result), byte => byte.toString(16).padStart(2, '0')).join('')
 }
-export function pdfPageFingerprinter(doc: PDFDocument): (page: PDFPage) => Promise<string> {
+export function pdfPageFingerprinter(doc: PDFDocument, scope: 'all' | 'content' = 'all'): (page: PDFPage) => Promise<string> {
   const memo = new Map<PDFObject, string>(), active = new Set<PDFObject>(); let visited = 0, streamBytes = 0
   const hash = async (object: PDFObject | undefined, depth = 0): Promise<string> => {
     if (!object) return 'absent'
@@ -47,10 +47,10 @@ export function pdfPageFingerprinter(doc: PDFDocument): (page: PDFPage) => Promi
       if (!Object.values(box).every(value => Number.isFinite(value) && Math.abs(value) <= 1_000_000) || box.width <= 0 || box.height <= 0) pdfFail('页面框无效或超出安全范围。')
     }
     if (!Number.isInteger(rotation) || rotation % 90) pdfFail('页面旋转必须为 90 度的整数倍。')
-    const entries = new Map(page.node.entries().filter(([key]) => !['Parent', 'Type'].includes(key.decodeText())).map(([key, value]) => [key.decodeText(), value]))
+    const entries = new Map(page.node.entries().filter(([key]) => !['Parent', 'Type', ...(scope === 'content' ? ['Resources'] : [])].includes(key.decodeText())).map(([key, value]) => [key.decodeText(), value]))
     for (const key of ['Resources', 'MediaBox', 'CropBox', 'Rotate']) {
       const inherited = page.node.getInheritableAttribute(PDFName.of(key))
-      if (inherited) entries.set(key, inherited)
+      if (inherited && !(scope === 'content' && key === 'Resources')) entries.set(key, inherited)
     }
     const canonical: [string, string][] = []
     for (const [key, value] of [...entries].sort(([a], [b]) => a.localeCompare(b))) canonical.push([key, await hash(value)])

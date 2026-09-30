@@ -5,6 +5,7 @@ import JsonFormatterTool from './components/JsonFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
+const ImagePdfTool = defineAsyncComponent(() => import('./components/ImagePdfTool.vue'))
 const PdfImagesTool = defineAsyncComponent(() => import('./components/PdfImagesTool.vue'))
 const PdfCompressionTool = defineAsyncComponent(() => import('./components/PdfCompressionTool.vue'))
 const PdfRotateTool = defineAsyncComponent(() => import('./components/PdfRotateTool.vue'))
@@ -598,6 +599,7 @@ export const tools: ToolDefinition[] = [
     tone: 'blue',
     component: BatchRenameTool,
   },
+  { id: 'images-pdf', name: '图片转 PDF', description: '按顺序将PNG/JPEG方向校正、等比排版为PDF，选择纸张/边距/透明度并安全另存。', category: 'files', keywords: ['PDF', '图片', 'PNG', 'JPEG', '合成', 'A4'], icon: ImageIcon, tone: 'blue', component: ImagePdfTool },
   { id: 'pdf-images', name: 'PDF 转图片', description: '在隔离线程按页/DPI生成 PNG 或 JPEG，逐页安全另存；当前部分实现。', category: 'files', keywords: ['PDF', '图片', 'PNG', 'JPEG', 'DPI'], icon: ImageIcon, tone: 'blue', component: PdfImagesTool },
   { id: 'pdf-compress', name: 'PDF 图片压缩', description: '有损重编码受支持的内嵌图片，保留文字/页面并比较实际体积；当前部分实现。', category: 'files', keywords: ['PDF', '压缩', '图片', 'quality', 'compress'], icon: ImageIcon, tone: 'blue', component: PdfCompressionTool },
   { id: 'pdf-rotate', name: 'PDF 页面旋转', description: '按页或批量追加直角旋转，校验保留页面内容后另存；当前部分实现。', category: 'files', keywords: ['PDF', '旋转', '页面', 'rotate'], icon: ImageIcon, tone: 'blue', component: PdfRotateTool },

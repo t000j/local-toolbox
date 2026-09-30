@@ -6,6 +6,7 @@ import { pdfPageFingerprinter } from './pdfPageFingerprint'
 import { boundedInflatePdf } from './pdfBoundedInflate'
 import { parseImageHeader } from './imageHeaders'
 import { pdfFail } from './pdfRawSyntax'
+import { safeImageStreams } from './pdfImageRoles'
 export interface PdfImagePixels { bytes: Uint8Array; kind: 'jpeg' | 'rgb'; width: number; height: number }
 export interface PdfCompressionResult { bytes: Uint8Array; before: number; after: number; images: number; changed: number; skipped: number; reasons: string[]; pages: number }
 export type PdfJpegEncoder = (image: PdfImagePixels, quality: number) => Promise<Uint8Array>
@@ -33,12 +34,16 @@ export async function compressPdfImages(input: Uint8Array, quality: number, enco
   if (!Number.isInteger(quality) || quality < 10 || quality > 95 || typeof encode !== 'function') pdfFail('JPEG质量须为10–95整数。')
   if (!(input instanceof Uint8Array) || !input.length || input.length > 8 * 1024 * 1024) pdfFail('PDF输入限1字节至8MiB。')
   const snapshot = new Uint8Array(input), doc = await loadPageDocument(snapshot), originalSize = snapshot.length
+  const safeImages = safeImageStreams(doc)
+  const originalContent = pdfPageFingerprinter(doc, 'content'), expectedContent = []
+  for (const page of doc.getPages()) expectedContent.push(await originalContent(page))
   let images = 0, changed = 0, skipped = 0, pixels = 0
   const reasons = new Set<string>()
   for (const [ref, object] of doc.context.enumerateIndirectObjects()) {
     if (!(object instanceof PDFRawStream) || doc.context.lookup(object.dict.get(PDFName.of('Subtype')))?.toString() !== '/Image') continue
     images++
     if (images > 64) pdfFail('最多处理64个独立图片资源。')
+    if (!safeImages.has(object)) { skipped++; reasons.add('图片未证明只用于直接页面图片槽位（可能共享绘制/字体/元数据用途或位于Form）；保留原始资源。'); continue }
     let image: PdfImagePixels
     try { image = candidate(doc, object) } catch (cause) { skipped++; reasons.add(cause instanceof Error ? cause.message : String(cause)); continue }
     pixels += image.width * image.height; if (pixels > 16_000_000) pdfFail('待重编码图片累计超过1600万像素。')
@@ -57,7 +62,10 @@ export async function compressPdfImages(input: Uint8Array, quality: number, enco
   if (bytes.length > 16 * 1024 * 1024) pdfFail('压缩输出超过16MiB。')
   const raw = preflightPdf(bytes, 16 * 1024 * 1024), output = await PDFDocument.load(bytes, { updateMetadata: false, ignoreEncryption: false, throwOnInvalidObject: true, capNumbers: false })
   if (auditPdf(output, raw) !== expected.length) pdfFail('输出页数校验失败。')
-  const verify = pdfPageFingerprinter(output)
-  for (const [index, page] of output.getPages().entries()) if (await verify(page) !== expected[index]) pdfFail('压缩保存后内容/资源/页面属性不一致。')
+  const verify = pdfPageFingerprinter(output), verifyContent = pdfPageFingerprinter(output, 'content')
+  for (const [index, page] of output.getPages().entries()) {
+    if (await verifyContent(page) !== expectedContent[index]) pdfFail('原始页面绘制内容或非图片属性发生变化，拒绝输出。')
+    if (await verify(page) !== expected[index]) pdfFail('压缩保存后内容/资源/页面属性不一致。')
+  }
   return { bytes, before: originalSize, after: bytes.length, images, changed, skipped, reasons: [...reasons], pages: expected.length }
 }
