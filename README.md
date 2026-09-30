@@ -1,6 +1,6 @@
 # LocalToolbox
 
-基于 Tauri 2、Vue 3、TypeScript 和 Rust 的 Windows 本地工具箱，当前源码已注册 55 款内置工具。工具在本机运行，不需要自建后端或线上数据库。
+基于 Tauri 2、Vue 3、TypeScript 和 Rust 的 Windows 本地工具箱，当前源码已注册 56 款内置工具。工具在本机运行，不需要自建后端或线上数据库。
 
 源码仓库：[t000j/local-toolbox](https://github.com/t000j/local-toolbox)。采用 [MIT License](LICENSE)，第三方依赖遵循各自许可证。
 
@@ -52,6 +52,7 @@
 - HTML 实体编解码：常见命名实体、十进制/十六进制数字实体，支持非 ASCII 编码；只显示纯文本，不执行 HTML
 - Unicode 查看与转义：分页查看码点、UTF-16 码元和偏移，互转字面 Unicode 转义，明确标记孤立代理项
 - JWT 内容查看器：本机解码 Header/Payload 原始 JSON，不验证签名或可信性，不联网、不保存令牌
+- 随机数与字符串：含上下界整数、自定义 Unicode 字符池、数量与长度设置；安全随机源与拒绝采样，允许重复
 - 密码生成器：安全随机源、长度/数量/字符类型设置，可排除易混淆字符；不保存密码，复制前提示剪贴板历史风险
 - UUID v4 生成器：生成 1–100 个随机标识并复制
 - 哈希摘要：UTF-8 文本及本地文件分块计算 MD5、SHA-1 和 SHA-256/384/512，最多 256 MiB 文件，支持取消与超时；弱算法显示安全提示

@@ -33,3 +33,19 @@ export function generatePasswords(length: number, count: number, selected: Passw
   if (result.length !== count) throw new Error('未能生成足够的密码，请增加长度后重试。')
   return result
 }
+export function generateIntegers(min: number, max: number, count: number): number[] {
+  validateCount(count)
+  if (!Number.isSafeInteger(min) || !Number.isSafeInteger(max) || min > max) throw new Error('上下界必须为安全整数，且下界不能大于上界。')
+  const size = max - min + 1
+  if (size > 0x100000000) throw new Error('区间最多包含 2³² 个整数。')
+  return Array.from({ length: count }, () => min + secureIndex(size))
+}
+export function generateStrings(alphabet: string, length: number, count: number): string[] {
+  validateCount(count); validateLength(length)
+  if (alphabet.length > 2048) throw new Error('字符池最多 2048 个 UTF-16 码元。')
+  const chars = [...new Set(alphabet)]
+  if (!chars.length || chars.some(char => /[\u0000-\u0020\u007f-\u009f\ud800-\udfff]/u.test(char))) {
+    throw new Error('字符池不能为空，也不能包含空白控制字符或孤立代理项。')
+  }
+  return Array.from({ length: count }, () => Array.from({ length }, () => chars[secureIndex(chars.length)]).join(''))
+}

@@ -54,6 +54,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const RandomGeneratorTool = defineAsyncComponent(() => import('./components/RandomGeneratorTool.vue'))
 const PasswordGeneratorTool = defineAsyncComponent(() => import('./components/PasswordGeneratorTool.vue'))
 const JwtViewerTool = defineAsyncComponent(() => import('./components/JwtViewerTool.vue'))
 const UnicodeTool = defineAsyncComponent(() => import('./components/UnicodeTool.vue'))
@@ -70,6 +71,16 @@ const YamlFormatterTool = defineAsyncComponent(() => import('./components/YamlFo
 
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  {
+    id: 'random-generator',
+    name: '随机数与字符串',
+    description: '按范围、长度与数量生成随机整数或自定义字符池字符串。',
+    category: 'data',
+    keywords: ['random', '随机数', '随机字符串', '测试数据'],
+    icon: Sparkles,
+    tone: 'blue',
+    component: RandomGeneratorTool,
+  },
   {
     id: 'password-generator',
     name: '密码生成器',
@@ -243,9 +254,9 @@ export const tools: ToolDefinition[] = [
   {
     id: 'hash',
     name: '哈希摘要',
-    description: '计算文本的 MD5、SHA-1 或 SHA-2 摘要，用于数据比对。',
+    description: '计算文本或本地文件的 MD5、SHA-1 或 SHA-2 摘要。',
     category: 'hash',
-    keywords: ['hash', 'md5', 'sha', '摘要', '校验', '单向'],
+    keywords: ['hash', 'md5', 'sha', '摘要', '校验', '单向', '文件'],
     icon: Hash,
     tone: 'amber',
     component: HashTool,
