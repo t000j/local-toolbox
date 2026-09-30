@@ -1,9 +1,11 @@
 import { PDFArray, PDFDict, PDFDocument, PDFName, PDFNumber, PDFNull, PDFObject, PDFRawStream } from 'pdf-lib'
 import { boundedInflatePdf } from './pdfBoundedInflate'
+import { auditPdfCmap } from './pdfCmapBudget'
 import { pdfFail } from './pdfRawSyntax'
 // Preview-only restrictions. Export preserves opaque image/resource streams without decoding them.
 export function auditPdfPreview(doc: PDFDocument): void {
   let total = 0, streams = 0, nodes = 0
+  const cmapBudget = { mappings: 0 }
   const seen = new Set<PDFObject>()
   const checkProcedural = (value: PDFObject, depth = 0): void => {
     if (seen.has(value)) return
@@ -12,7 +14,7 @@ export function auditPdfPreview(doc: PDFDocument): void {
     if (value instanceof PDFRawStream) { checkProcedural(value.dict, depth + 1); return }
     if (value instanceof PDFArray) { value.asArray().forEach(child => checkProcedural(child, depth + 1)); return }
     if (value instanceof PDFDict) {
-      for (const key of ['FunctionType', 'PatternType', 'ShadingType', 'SMask', 'Mask']) if (value.has(PDFName.of(key))) pdfFail(`缩略图暂不支持${key}过程资源，避免未界定的采样/平铺分配。`)
+      for (const key of ['FunctionType', 'PatternType', 'ShadingType', 'SMask', 'Mask', 'UseCMap']) if (value.has(PDFName.of(key))) pdfFail(`缩略图暂不支持${key}过程资源，避免未界定的采样/平铺分配。`)
       value.values().forEach(child => checkProcedural(child, depth + 1))
     }
   }
@@ -26,6 +28,7 @@ export function auditPdfPreview(doc: PDFDocument): void {
     const params = doc.context.lookup(dict.get(PDFName.of('DecodeParms')))
     if (params && params !== PDFNull) pdfFail('缩略图暂不支持DecodeParms/图像预测器；不会生成可能不完整的预览。')
     const bytes = object.getContents(), decoded = filters.length ? boundedInflatePdf(bytes, 32 * 1024 * 1024 - total) : bytes
+    auditPdfCmap(decoded, cmapBudget)
     // Inline-image payloads are not indirect streams; conservatively reject their BI spelling anywhere.
     // This can reject harmless binary/string bytes, but cannot admit an unbounded nested image decoder.
     for (let i = 0; i + 1 < decoded.length; i++) if (decoded[i] === 66 && decoded[i + 1] === 73) pdfFail('缩略图拒绝BI内联图像及疑似字节；页面导出不受此预览限制。')

@@ -84,3 +84,11 @@ Actual PDF.js synthetic extraction tests cover requested page order, deliberatel
 Uses the existing audited static-PDF loader without decoding page image streams. Displays scalar Info keys (including custom names), original date declarations, page count/CropBox/rotation and the Catalog Metadata stream as raw UTF-8 text. No XML parser, entities, scripts or links are executed. Vue text interpolation/readonly textarea are used; control and bidi-formatting characters are escaped. Raw dates are not converted or authenticated. Unshown metadata can exist in pages/resources/other objects; this is neither a complete privacy inventory nor a cleaner.
 
 Same8MiB/200page/6000object admission restrictions;20s worker deadline. Info≤64 fields,65,536 input characters per field and256Ki displayed characters overall. Metadata accepts no filter or single Flate,≤256KiB encoded and decoded,≤512Ki displayed characters. Unsupported encoding/parameters or invalid UTF-8 are reported without guessed decoding. Missing data is not evidence of anonymization. Synthetic read-only/Unicode/markup/bidi/XML-as-text/malformed/decompression checks pass; real Windows UI remains unverified.
+
+### Shared textual CMap expansion guard
+
+Before preview/raster/text parsing, textual mapping blocks are conservatively checked:16-bit source codes/CIDs,≤4,096 entries per block,≤100,000 expanded mappings across document streams and≤1MiB per CMap. bfchar/bfrange (hex or exact-length destination arrays) and cidchar/cidrange are supported. Unusual strings, malformed blocks, inheritance and ambiguous percent/comment syntax reject. This is intentionally narrower than PDF.js (whose native range limit approaches16 million entries), not a general CMap parser. It can reject harmless command-like bytes in other streams. Synthetic Chinese ToUnicode works; oversized mapping fixtures reject before PDF.js; existing native-canvas rendering regressions still pass.
+
+## Cancelled OCR scope (70)
+
+OCR was cancelled at the user’s request because of model size. OCR UI/engine, language models, dependencies, fixtures and asset preparation hooks have been removed. Selectable PDF text extraction and shared CMap budget protections remain. No OCR assets are shipped by the current source build.
