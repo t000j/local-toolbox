@@ -28,6 +28,7 @@ function clear() { file.value = null; reset() }
   </div>
 </template>
 <style scoped>
+.action-buttons { flex-wrap: wrap; } .form-hint { overflow-wrap: anywhere; }
 .metadata-grid { display: grid; grid-template-columns: minmax(100px, 160px) minmax(0, 1fr); gap: 8px 16px; font-size: 12px; }
-dt { color: var(--text-secondary); } dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; } input { max-width: 100%; }
+dt { color: var(--muted); } dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; } input { max-width: 100%; }
 </style>

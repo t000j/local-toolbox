@@ -38,5 +38,6 @@ function resize() {
   </div>
 </template>
 <style scoped>
+.action-buttons { flex-wrap: wrap; } .form-hint { overflow-wrap: anywhere; }
 input[type=number] { width: 90px; } input[type=file] { max-width: 100%; } label { font-size: 12px; }
 </style>

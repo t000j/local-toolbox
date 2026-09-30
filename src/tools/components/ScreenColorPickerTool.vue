@@ -29,5 +29,6 @@ onBeforeUnmount(() => { disposed = true; revision++ })
   </div>
 </template>
 <style scoped>
-.color-result { display: flex; align-items: center; gap: 16px; } .color-swatch { width: 80px; height: 64px; border: 1px solid var(--border-color); border-radius: 8px; } output { font-family: monospace; font-size: 20px; }
+.action-buttons { flex-wrap: wrap; } .form-hint { overflow-wrap: anywhere; }
+.color-result { display: flex; align-items: center; gap: 16px; } .color-swatch { width: 80px; height: 64px; border: 1px solid var(--line); border-radius: 8px; } output { font-family: monospace; font-size: 20px; }
 </style>

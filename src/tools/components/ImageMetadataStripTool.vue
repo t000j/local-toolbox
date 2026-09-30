@@ -47,5 +47,6 @@ onBeforeUnmount(() => { disposed = true; revision++ })
   </div>
 </template>
 <style scoped>
-label, li, dl { font-size: 12px; } input { max-width: 100%; } dl { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 6px 12px; } dd { margin: 0; overflow-wrap: anywhere; } dt { color: var(--text-secondary); }
+.action-buttons { flex-wrap: wrap; } .form-hint { overflow-wrap: anywhere; }
+label, li, dl { font-size: 12px; } input { max-width: 100%; } dl { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 6px 12px; } dd { margin: 0; overflow-wrap: anywhere; } dt { color: var(--muted); }
 </style>

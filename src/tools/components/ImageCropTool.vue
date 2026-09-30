@@ -46,5 +46,6 @@ function clearAll() { file.value = null; header.reset(); clear() }
   </div>
 </template>
 <style scoped>
+.action-buttons { flex-wrap: wrap; } .form-hint { overflow-wrap: anywhere; }
 input[type=number] { width: 78px; } input[type=file] { max-width: 100%; } label { font-size: 12px; }
 </style>

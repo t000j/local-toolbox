@@ -5,6 +5,7 @@ import JsonFormatterTool from './components/JsonFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
+const ColorFormatTool = defineAsyncComponent(() => import('./components/ColorFormatTool.vue'))
 const ScreenColorPickerTool = defineAsyncComponent(() => import('./components/ScreenColorPickerTool.vue'))
 const ImageMetadataStripTool = defineAsyncComponent(() => import('./components/ImageMetadataStripTool.vue'))
 const ImageMetadataTool = defineAsyncComponent(() => import('./components/ImageMetadataTool.vue'))
@@ -589,6 +590,7 @@ export const tools: ToolDefinition[] = [
     tone: 'blue',
     component: BatchRenameTool,
   },
+  { id: 'color-format', name: '颜色格式转换', description: '互转 HEX、RGB 和 HSL，保留透明度并显示量化与范围说明。', category: 'files', keywords: ['颜色', 'HEX', 'RGB', 'HSL', '透明度', 'color'], icon: ImageIcon, tone: 'blue', component: ColorFormatTool },
   { id: 'screen-color-picker', name: '屏幕取色器', description: '手动启动系统取色界面，点选一个屏幕像素并复制 sRGB 色值。', category: 'files', keywords: ['取色', '屏幕', '颜色', 'HEX', 'eyedropper'], icon: ImageIcon, tone: 'blue', component: ScreenColorPickerTool },
   { id: 'image-metadata-strip', name: '图片元数据清除', description: '移除 PNG/JPEG 常见隐私元数据，保留像素、方向和必要颜色信息，预览后另存。', category: 'files', keywords: ['图片', '元数据清除', '隐私', 'GPS', 'EXIF'], icon: ImageIcon, tone: 'blue', component: ImageMetadataStripTool },
   { id: 'image-metadata', name: '图片元数据查看', description: '只读查看 PNG/JPEG 尺寸、颜色声明及有限 EXIF/GPS 字段。', category: 'files', keywords: ['元数据', 'EXIF', 'GPS', '色彩空间', 'metadata'], icon: ImageIcon, tone: 'blue', component: ImageMetadataTool },
