@@ -21,7 +21,7 @@ cd E:\codexProject\toolbox-app
 git status --short
 ```
 
-先核对修改范围。工具实现、注册和产品规划应同步；当前工作目录的“本地工具箱-产品规划与技术选型.md”是规划源文档，仓库 docs/PRODUCT_PLAN.md 是它的镜像。
+先核对修改范围。工具实现、注册和产品规划应同步；项目根目录的“本地工具箱-产品规划与技术选型.md”是规划源文档，docs/PRODUCT_PLAN.md 是它的镜像，两份都随源码提交。独立克隆仓库后也能直接修改源文档并运行 docs:sync。
 
 ## 2. 同步新的版本号
 

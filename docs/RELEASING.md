@@ -98,7 +98,7 @@ npm run release:build
 
 ## 文档同步
 
-当前工作目录的 `本地工具箱-产品规划与技术选型.md` 是产品规划源文档；执行 `npm run docs:sync` 复制为仓库中的 `docs/PRODUCT_PLAN.md`。单独克隆仓库时直接阅读镜像。
+项目根目录的 `本地工具箱-产品规划与技术选型.md` 是产品规划源文档；执行 `npm run docs:sync` 复制为 `docs/PRODUCT_PLAN.md`，两份文档都纳入 Git。原开发机外层工作目录的同名文件作为留存副本，后续以项目根目录的源文档为准。
 
 ## 当前验证边界
 
