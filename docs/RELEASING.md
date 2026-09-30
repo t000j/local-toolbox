@@ -13,7 +13,7 @@
 
 ## 更新密钥
 
-公钥已经写入 `src-tauri/tauri.conf.json`。对应私钥及密码位于开发机 `.secrets/`，该目录已经排除出 Git，并限制为当前 Windows 用户访问。
+公钥已经写入 `src-tauri/tauri.conf.json`。对应私钥及密码位于开发机 `.secrets/`，该目录已经排除出 Git，并限制为开发机账号与本机执行账号访问。
 
 - `.secrets/updater.key`：带密码保护的签名私钥。
 - `.secrets/updater-password.txt`：该私钥的密码。
@@ -25,9 +25,9 @@ GitHub Actions 使用两个仓库级 Secrets：
 1. `TAURI_SIGNING_PRIVATE_KEY`：私钥文件的完整内容。
 2. `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`：对应密码，不能附加多余换行。
 
-目前这两项 Secrets 尚未上传。自动审批要求用户明确授权将对应私钥与密码存入 `t000j/local-toolbox` 仓库的 Actions 加密 Secrets；源码仓库与更新接入代码可先推送，签名构建需在授权并配置 Secrets 后才能运行。
+2026-09-30 已将这两项配置保存到 `t000j/local-toolbox` 的仓库级 Actions 加密 Secrets，并核对名称与配置时间。私钥与密码未提交到源码仓库，首个签名安装包尚未构建或发布。
 
-只有发布工作流可访问 Secrets。`GITHUB_TOKEN` 由 GitHub 自动提供，不需要把个人访问令牌写进源码。
+发布工作流通过 `secrets` 读取这两项签名配置。仓库级 Secrets 可供有权限的工作流引用，因此修改发布工作流时也应审核密钥的使用范围。`GITHUB_TOKEN` 由 GitHub 自动提供，不需要把个人访问令牌写进源码。
 
 ## 首次发布
 
@@ -69,7 +69,7 @@ npm run release:build
 
 ## 当前验证边界
 
-此次只接入仓库、依赖、工作流和更新代码。按用户既有要求，尚未编译、运行应用、构建安装包或实际完成版本升级。正式发布前应完成这些验证。
+此次已接入仓库、依赖、工作流和更新代码，并配置签名 Secrets。已核对 Secret 名称与配置时间、本机敏感文件的 Git 忽略规则；按用户既有要求，尚未编译、运行应用、构建安装包或实际完成版本升级。正式发布前应完成这些验证。
 
 ## 官方参考
 

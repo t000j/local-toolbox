@@ -307,9 +307,9 @@ OCR、PDF 批处理和服务/启动项管理可以放到后续阶段，分别评
 - 正式安装后的应用启动 3.5 秒后异步检查更新；可在“关于与更新”关闭或手动检查。开发模式不执行检查，网络失败不阻塞工具使用。
 - 更新先下载并验签，再由用户确认安装。Windows 安装会退出应用，待原生工具任务结束后才允许执行；安装后由安装程序重新启动应用。
 - GitHub Actions 在版本标签或手动触发时构建 Windows x64 NSIS 包、签名与 `latest.json`，先生成 Release 草稿；首版验证完成后再正式发布。
-- Actions 签名 Secrets 暂未上传；自动审批要求用户明确授权将对应私钥和密码存入该仓库的加密 Secrets。
+- 2026-09-30 已配置仓库级 `TAURI_SIGNING_PRIVATE_KEY` 与 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 两项 Actions 加密 Secrets，并核对名称与配置时间；私钥与密码未提交到源码仓库，首次签名构建仍待执行。
 - 版本同步与发布维护说明见 `toolbox-app/docs/RELEASING.md`；根目录规划为源文档，通过 `npm run docs:sync` 同步到仓库中的 `docs/PRODUCT_PLAN.md`。
-- 此次完成 Git 和发布更新代码的接入，依赖已安装；遵循既有要求，未编译应用、运行界面、构建安装包、触发 Actions 或发布正式版本。
+- 此次完成 Git、发布更新代码和 Actions 签名配置的接入，依赖已安装；遵循既有要求，未编译应用、运行界面、构建安装包、触发 Actions 或发布正式版本。
 
 ## 7. 后续代码目录建议
 
