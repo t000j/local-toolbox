@@ -54,6 +54,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const PasswordGeneratorTool = defineAsyncComponent(() => import('./components/PasswordGeneratorTool.vue'))
 const JwtViewerTool = defineAsyncComponent(() => import('./components/JwtViewerTool.vue'))
 const UnicodeTool = defineAsyncComponent(() => import('./components/UnicodeTool.vue'))
 const HtmlEntitiesTool = defineAsyncComponent(() => import('./components/HtmlEntitiesTool.vue'))
@@ -69,6 +70,16 @@ const YamlFormatterTool = defineAsyncComponent(() => import('./components/YamlFo
 
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  {
+    id: 'password-generator',
+    name: '密码生成器',
+    description: '按长度与字符类型，在本机生成安全随机密码。',
+    category: 'data',
+    keywords: ['密码', 'password', '随机', '安全'],
+    icon: Sparkles,
+    tone: 'violet',
+    component: PasswordGeneratorTool,
+  },
   {
     id: 'json',
     name: 'JSON 格式化',
