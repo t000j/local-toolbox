@@ -5,6 +5,7 @@ import JsonFormatterTool from './components/JsonFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
+const ImageResizeTool = defineAsyncComponent(() => import('./components/ImageResizeTool.vue'))
 const ZipArchiveTool = defineAsyncComponent(() => import('./components/ZipArchiveTool.vue'))
 const ChecksumTool = defineAsyncComponent(() => import('./components/ChecksumTool.vue'))
 const TextEncodingTool = defineAsyncComponent(() => import('./components/TextEncodingTool.vue'))
@@ -584,6 +585,7 @@ export const tools: ToolDefinition[] = [
     tone: 'blue',
     component: BatchRenameTool,
   },
+  { id: 'image-resize', name: '图片尺寸调整', description: '单张或批量按像素、比例缩放，预览后另存 PNG。', category: 'files', keywords: ['图片', '缩放', '尺寸', 'resize'], icon: ImageIcon, tone: 'blue', component: ImageResizeTool },
   {
     id: 'image-format',
     name: '图片格式转换',
