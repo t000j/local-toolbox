@@ -7,6 +7,7 @@ mod lan_discovery;
 mod http_request;
 mod process_viewer;
 mod service_manager;
+mod startup_manager;
 mod local_reports;
 mod native_windows;
 mod screenshot;
@@ -43,6 +44,7 @@ pub fn run() {
             http_request::run_http_request,
             process_viewer::run_process_snapshot,
             service_manager::run_service_manager,
+            startup_manager::run_startup_manager,
             network_probe::prepare_network_probe,
             network_probe::run_dns_query,
             network_probe::run_dns_cache,

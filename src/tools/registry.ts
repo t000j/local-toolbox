@@ -86,8 +86,11 @@ const ProcessViewerTool = defineAsyncComponent(() => import('./components/Proces
 
 const ServiceManagerTool = defineAsyncComponent(() => import('./components/ServiceManagerTool.vue'))
 
+const StartupManagerTool = defineAsyncComponent(() => import('./components/StartupManagerTool.vue'))
+
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  { id: 'startup-manager', name: '开机启动项管理', description: '管理当前用户 Run 子集，确认后备份禁用与恢复。', category: 'system-network', keywords: ['startup', '启动项', 'Run'], icon: Monitor, tone: 'blue', component: StartupManagerTool },
   { id: 'service-manager', name: 'Windows 服务管理器', description: '只读查询服务，逐项确认后安全范围内启动或停止。', category: 'system-network', keywords: ['service', '服务', '启动', '停止'], icon: Monitor, tone: 'blue', component: ServiceManagerTool },
   { id: 'process-viewer', name: '进程查看器', description: '只读查看进程名称、PID、工作集内存与累计 CPU 时间。', category: 'system-network', keywords: ['process', '进程', 'pid', '内存', 'cpu'], icon: Monitor, tone: 'blue', component: ProcessViewerTool },
   { id: 'http-request', name: 'HTTP 请求调试器', description: '手动发送指定 HTTP(S) 请求，查看有界纯文本响应。', category: 'system-network', keywords: ['http', 'api', '请求', '响应', '调试'], icon: Globe, tone: 'blue', component: HttpRequestTool },
