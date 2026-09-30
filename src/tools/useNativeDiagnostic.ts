@@ -2,6 +2,8 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import { trackedInvoke as invoke } from '../app/activity'
 import { copyText } from './clipboard'
 export interface DiagnosticResult {
+  processOutput?: string
+  processWarning?: string
   output: string
   status: 'completed' | 'cancelled' | 'timeout' | 'outputLimit'
   exitCode: number | null

@@ -28,3 +28,13 @@ export function boundedProbeInteger(value: number, min: number, max: number): nu
   if (!Number.isInteger(value) || value < min || value > max) throw new Error(`参数必须是 ${min}–${max} 范围内的整数。`)
   return value
 }
+
+/** DNS record owners may contain underscores (e.g. DKIM/DMARC), unlike hosts. */
+export function validateDnsTarget(input: string): string {
+  if (!input.includes('_')) return validateNetworkTarget(input)
+  const name = input.endsWith('.') ? input.slice(0, -1) : input
+  if (input.length > 253 || !name.split('.').every(label => /^[A-Za-z0-9_](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?$/.test(label))) {
+    throw new Error('请输入有效 ASCII DNS 记录名称；每段限 1–63 字符，不支持空格、URL 或命令参数。')
+  }
+  return input
+}

@@ -38,6 +38,7 @@ pub fn run() {
             network_probe::prepare_network_probe,
             network_probe::run_dns_query,
             network_probe::run_dns_cache,
+            network_probe::run_tcp_snapshot,
             network_probe::run_ping,
             network_probe::run_traceroute,
             network_probe::cancel_network_probe,

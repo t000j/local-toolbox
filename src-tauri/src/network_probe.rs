@@ -563,8 +563,20 @@ pub async fn run_traceroute(job_id: String, target: String, max_hops: u32, timeo
     }).await.map_err(|error| format!("诊断工作线程异常结束：{error}"))?
 }
 
+fn validate_dns_target(target: &str) -> Result<(), String> {
+    if !target.contains('_') { return validate_target(target); }
+    let name = target.strip_suffix('.').unwrap_or(target);
+    let valid = target.len() <= 253 && name.split('.').all(|label| {
+        let bytes = label.as_bytes();
+        let edge = |byte: u8| byte.is_ascii_alphanumeric() || byte == b'_';
+        !bytes.is_empty() && bytes.len() <= 63 && edge(bytes[0]) && edge(bytes[bytes.len() - 1])
+            && bytes.iter().all(|byte| edge(*byte) || *byte == b'-')
+    });
+    if valid { Ok(()) } else { Err("请输入有效 ASCII DNS 记录名称，不支持空格、URL 或命令参数。".to_owned()) }
+}
+
 fn dns_args(target: &str, record_type: &str) -> Result<Vec<String>, String> {
-    validate_target(target)?;
+    validate_dns_target(target)?;
     if !["A", "AAAA", "CNAME", "MX", "TXT", "NS", "SOA", "PTR"].contains(&record_type) {
         return Err("不支持此 DNS 记录类型。".to_owned());
     }
@@ -602,6 +614,46 @@ pub async fn run_dns_cache(job_id: String, flush: bool, confirmed: bool) -> Resu
     }).await.map_err(|error| format!("诊断工作线程异常结束：{error}"))?
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TcpSnapshot {
+    #[serde(flatten)]
+    snapshot: ProbeExecution,
+    process_output: String,
+    process_warning: String,
+}
+
+#[tauri::command]
+pub async fn run_tcp_snapshot(job_id: String) -> Result<TcpSnapshot, String> {
+    let lease = registry().acquire(&job_id)?;
+    let started = Instant::now();
+    tauri::async_runtime::spawn_blocking(move || {
+        let deadline = Duration::from_secs(20);
+        // -n prevents reverse DNS. Include all families, then the UI selects TCP
+        // rows; UDP rows remain only in the explicitly labelled raw output.
+        let mut snapshot = execute_probe(&lease, "netstat.exe", &["-ano".to_owned()], started, deadline)?;
+        let mut process_output = String::new();
+        let mut process_warning = "连接表未完整读取，未继续获取进程名称。".to_owned();
+        if snapshot.status == ProbeStatus::Completed && snapshot.exit_code == Some(0) {
+            match execute_probe(&lease, "tasklist.exe", &["/FO".to_owned(), "CSV".to_owned(), "/NH".to_owned()], started, deadline) {
+                Ok(names) => {
+                    process_warning = if names.status == ProbeStatus::Completed && names.exit_code == Some(0) {
+                        String::new()
+                    } else { "进程名称快照不完整或读取失败；未知名称保留 PID。".to_owned() };
+                    if names.status != ProbeStatus::Completed {
+                        snapshot.status = names.status;
+                        snapshot.exit_code = None;
+                    }
+                    process_output = names.output;
+                }
+                Err(error) => { process_warning = error; }
+            }
+        }
+        snapshot.elapsed_ms = started.elapsed().as_millis() as u64;
+        Ok(TcpSnapshot { snapshot, process_output, process_warning })
+    }).await.map_err(|error| format!("诊断工作线程异常结束：{error}"))?
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -621,6 +673,11 @@ mod tests {
         for kind in ["A", "AAAA", "CNAME", "MX", "TXT", "NS", "SOA", "PTR"] { assert!(dns_args("example.com.", kind).is_ok()); }
         for kind in ["ANY", "A -debug", "", "a"] { assert!(dns_args("example.com", kind).is_err()); }
         assert!(dns_args("-", "A").is_err());
+        assert!(dns_args("_dmarc.example.com", "TXT").is_ok());
+        assert!(dns_args("selector._domainkey.example.com", "TXT").is_ok());
+        for target in ["_a;whoami", "_a -debug", "_-", "a.._b", "_a:80", "_a/", "_a\n"] {
+            assert!(dns_args(target, "TXT").is_err());
+        }
     }
 
     #[test]

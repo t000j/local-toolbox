@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { validateNetworkTarget } from '../networkTarget'
+import { validateDnsTarget } from '../networkTarget'
 import { useNativeDiagnostic } from '../useNativeDiagnostic'
 import DiagnosticOutput from './DiagnosticOutput.vue'
 const target = ref(''), recordType = ref('A')
@@ -10,7 +10,7 @@ watch([target, recordType], task.clear, { flush: 'sync' })
 function query() {
   if (busy.value) return
   task.clear()
-  try { validateNetworkTarget(target.value) } catch (cause) { error.value = String(cause); return }
+  try { validateDnsTarget(target.value) } catch (cause) { error.value = String(cause); return }
   void task.start('run_dns_query', { target: target.value, recordType: recordType.value })
 }
 </script>
