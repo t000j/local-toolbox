@@ -1,0 +1,17 @@
+// Status/coverage consistency only. This does not prove Windows runtime behavior.
+const fs = require('node:fs'), assert = require('node:assert/strict')
+const read = file => fs.readFileSync(file, 'utf8')
+const plan = read('本地工具箱-产品规划与技术选型.md'), list = plan.split('## 4.')[1].split('## 5.')[0]
+const rows = list.match(/^\d+\. .+$/gm)
+assert.equal(rows.length, 100)
+assert.equal(rows.filter(row => row.includes('[已实现]')).length, 99)
+assert.equal(rows.filter(row => row.includes('[已取消]')).length, 1)
+assert.ok(rows.find(row => row.startsWith('70.')).includes('[已取消]'))
+assert.equal((read('src/tools/registry.ts').match(/\bid:/g) || []).length, 97)
+assert.ok(!read('src/tools/registry.ts').includes('LocalOcrTool'))
+assert.ok(!read('package-lock.json').includes('tesseract'))
+assert.ok(!read('package.json').includes('prepare-ocr'))
+const scope = read('docs/scope-and-verification.md')
+for (const term of ['原始工作流源码', '支持范围', 'Windows', '0.1.2', 'StartupApproved', 'PATH', '增量/混合xref', '不是进程堆的硬上限']) assert.ok(scope.includes(term))
+assert.ok(!fs.existsSync('public/ocr') && !fs.existsSync('public/ocr-runtime') && !fs.existsSync('assets/ocr-models/manifest.json'))
+console.log('Roadmap 99 scoped implementations/1 cancellation, registry97, OCR absence and separate compatibility/Windows/release disclosures verified; no runtime claim.')

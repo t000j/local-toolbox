@@ -9,7 +9,12 @@ import type { PdfPreviewImage } from './pdfPreviewImages'
 import { PDF_PREVIEW_DECODED_BYTES, PDF_PREVIEW_FONT_BYTES, PDF_PREVIEW_IMAGE_RGBA_BYTES, PDF_PREVIEW_TOTAL_IMAGE_PIXELS } from './pdfPreviewLimits'
 
 // Preview-only restrictions. Export preserves opaque resource streams separately.
-export function auditPdfPreview(doc: PDFDocument): void {
+export function auditPdfPreview(doc: PDFDocument): void { auditPdfResources(doc, false) }
+// Text extraction substitutes these proven image-only streams before PDF.js sees them.
+export function auditPdfTextResources(doc: PDFDocument): Set<PDFRawStream> { return auditPdfResources(doc, true) }
+function auditPdfResources(doc: PDFDocument, textOnly: boolean): Set<PDFRawStream> {
+  const roles = pdfPreviewRoles(doc)
+  if (roles.streams.size > 2000) pdfFail('资源流数量超过2000。')
   let total = 0, pixels = 0, rgba = 0, nodes = 0
   const cmapBudget = { mappings: 0 }, images = new Map<PDFRawStream, PdfPreviewImage>()
   const seen = new Set<PDFObject>(), active = new Set<PDFObject>(), imageDicts = new Set<PDFDict>()
@@ -21,7 +26,13 @@ export function auditPdfPreview(doc: PDFDocument): void {
     if (seen.has(value) || value instanceof PDFRef) return
     active.add(value)
     if (value instanceof PDFRawStream) {
-      if (doc.context.lookup(value.dict.get(PDFName.of('Subtype')))?.toString() === '/Image') { images.set(value, inspectPdfPreviewImage(doc, value)); imageDicts.add(value.dict) }
+      if (doc.context.lookup(value.dict.get(PDFName.of('Subtype')))?.toString() === '/Image') {
+        if (textOnly) {
+          if (!roles.images.has(value)) pdfFail('文字提取图片用途或别名不明确，不能跳过资源检查。')
+          active.delete(value); seen.add(value); return
+        }
+        images.set(value, inspectPdfPreviewImage(doc, value)); imageDicts.add(value.dict)
+      }
       checkProcedural(value.dict, depth + 1)
     } else if (value instanceof PDFArray) value.asArray().forEach(child => checkProcedural(child, depth + 1))
     else if (value instanceof PDFDict) {
@@ -46,9 +57,8 @@ export function auditPdfPreview(doc: PDFDocument): void {
   }
   for (const [, object] of doc.context.enumerateIndirectObjects()) checkProcedural(object)
   inspectPdfPreviewMasks(doc, images)
-  const roles = pdfPreviewRoles(doc)
-  if (roles.streams.size > 2000) pdfFail('缩略图最多处理2000个资源流。')
   for (const object of roles.streams) {
+    if (textOnly && roles.images.has(object)) continue
     const dict = object.dict, image = images.get(object), font = roles.fonts.has(object)
     if (image && !roles.images.has(object)) pdfFail('缩略图图片角色或别名不受支持，不能绕过BI/CMap检查。')
     const filter = doc.context.lookup(dict.get(PDFName.of('Filter')))
@@ -82,4 +92,5 @@ export function auditPdfPreview(doc: PDFDocument): void {
     }
     total += charge
   }
+  return roles.images
 }

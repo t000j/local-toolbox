@@ -70,7 +70,7 @@ onBeforeUnmount(() => { disposed = true; closeEditor(); notice.value = ''; editi
 <template>
   <div class="tool-form">
     <p class="form-hint">用户 / 系统持久环境变量（64 位注册表原始值）。手动读取，默认只读；最多 500 条 / 64 KiB / 20 秒，结果不完整时禁止变更。不提权，权限不足即失败。</p>
-    <p class="form-hint">部分实现：支持普通用户变量新增、修改、删除。系统变量、PATH 等受保护名称只读；敏感名称内容不读取。只编辑 ASCII 名称，不支持重命名或修改既有类型。名称筛选无法识别所有秘密，普通值仍可能敏感；不会读取进程环境。</p>
+    <p class="form-hint">支持范围：支持普通用户变量新增、修改、删除。系统变量、PATH 等受保护名称只读；敏感名称内容不读取。只编辑 ASCII 名称，不支持重命名或修改既有类型。名称筛选无法识别所有秘密，普通值仍可能敏感；不会读取进程环境。</p>
     <div class="action-buttons"><button class="primary-button" :disabled="busy || changing" @click="read">读取 / 刷新</button>
       <button v-if="busy" class="secondary-button" :disabled="cancelling" @click="task.cancel">取消等待</button></div>
     <label><input v-model="editing" type="checkbox" :disabled="busy || changing" @change="closeEditor" /> 本次页面允许预览变更（每次另行确认）</label>

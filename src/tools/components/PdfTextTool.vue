@@ -32,9 +32,9 @@ onBeforeUnmount(() => { disposed = true; revision++ })
       <button class="primary-button" :disabled="saving" @click="saveOutput">{{ saving ? '保存中…' : '另存UTF-8文本（不覆盖）' }}</button>
     </template>
     <p class="form-hint" role="status">{{ error || notice || (busy ? '隔离线程正在读取文字…' : '') }}</p>
-    <p class="form-hint">部分实现，仅提取PDF内已有文字，不做OCR。PDF.js会规范化空白/部分Unicode字符；保留其项目顺序和换行提示，并插入页码分隔；多栏、表格、旋转文字、双向语言、连字及字形映射可能与视觉阅读顺序不同，不保证版式或逐字准确，导出前请核对。</p>
-    <p class="form-hint">本机处理，不上传。只读取随应用提供的固定字体资源，不加载外部CMap/字体或执行脚本。沿用静态PDF及保守资源准入：支持JPEG扫描图和同尺寸简单蒙版、受验证用途的嵌入字体；图像页面不做OCR，可能没有文字。加密/交互/链接/表单/增量xref、JPX/CCITT、预测器、内联图片和复杂遮罩等仍拒绝；并非通用PDF兼容。</p>
-    <p class="form-hint">输入8MiB/原200页、每次50页/10万个文字项目/100万字符/4MiB UTF-8输出；资源解压32MiB、30秒Worker超时，取消/编辑/离页终止。真实WebView隔离线程、Windows另存未验证。</p>
+    <p class="form-hint">支持范围：仅提取PDF内已有文字，不做OCR。PDF.js会规范化空白/部分Unicode字符；保留其项目顺序和换行提示，并插入页码分隔；多栏、表格、旋转文字、双向语言、连字及字形映射可能与视觉阅读顺序不同，不保证版式或逐字准确，导出前请核对。</p>
+    <p class="form-hint">本机处理，不上传。只读取随应用提供的固定字体资源，不加载外部CMap/字体或执行脚本。沿用静态PDF准入和字体/Form/CMap保护。已证明仅为图片用途的资源在临时文字解析副本中替换为微小占位图，不解码原图，因此JPX/CCITT/特殊图片编码不再单独阻止文字提取。原文件不修改，不生成替换后的PDF；图片文字不做OCR。图片用途不明确、字体映射/外部CMap、内联图片、加密/交互/链接/表单/增量xref等仍拒绝；并非通用PDF兼容。</p>
+    <p class="form-hint">输入8MiB/原200页、每次50页/10万个文字项目/100万字符/4MiB UTF-8输出；非图片资源解压32MiB、字体单项4MiB、30秒Worker超时，取消/编辑/离页终止。真实WebView隔离线程、Windows另存未验证。</p>
   </div>
 </template>
 <style scoped>

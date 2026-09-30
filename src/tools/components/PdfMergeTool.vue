@@ -44,7 +44,7 @@ onBeforeUnmount(() => { disposed = true; revision++ })
       <button class="primary-button" :disabled="!acknowledged || saving" @click="saveOutput">{{ saving ? '保存中…' : '另存新 PDF（不覆盖）' }}</button>
     </template>
     <p class="form-hint" role="status">{{ error || notice || (busy ? '正在本机解析、合并并重读校验…' : '') }}</p>
-    <p class="form-hint">当前为静态页面子集：支持经典xref及有界的单次保存ObjStm/XRef，拒绝混合/增量xref、间接流长度、加密/密码、表单/签名、注释/链接/动作/脚本、附件、外部引用、分层/标记等不支持结构；不会绕过保护或静默扁平化。目录书签、元数据及文档级功能不保证保留，遇到不支持结构会停止。不是恶意PDF清洗器，仍应只打开可信来源的文档。</p>
+    <p class="form-hint">当前为静态页面子集：支持经典xref及有界的单次保存ObjStm/XRef，支持经典xref的一跳整数间接流长度；拒绝混合/增量xref、其他间接长度、加密/密码、表单/签名、注释/链接/动作/脚本、附件、外部引用、分层/标记等不支持结构；不会绕过保护或静默扁平化。目录书签、元数据及文档级功能不保证保留，遇到不支持结构会停止。不是恶意PDF清洗器，仍应只打开可信来源的文档。</p>
     <p class="form-hint">每份8MiB、总输入/输出16MiB、最多200页、30秒Worker超时。解析前后还有结构/对象/深度限制，可能保守拒绝部分正常PDF；解析器实际内存无法绝对保证。取消/清空/离页终止，不上传或自动保存。Windows桌面版安全新建另存，拒绝覆盖；提交保存后无法撤回。合并不等于压缩或PDF/A合规转换。</p>
   </div>
 </template>

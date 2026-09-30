@@ -3,7 +3,7 @@ import { PDF_PREVIEW_IMAGE_PIXELS } from './pdfPreviewLimits'
 import 'pdfjs-dist/legacy/build/pdf.worker.mjs'
 import { PDFWorker, getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { loadPageDocument } from './pdfPages'
-import { auditPdfPreview } from './pdfPreviewGate'
+import { preparePdfTextResources } from './pdfTextResources'
 import { parsePageSelection } from './pdfPageSelection'
 import { finishPdfText, PDF_TEXT_LIMITS, textAccumulator } from './pdfText'
 import type { PdfTextPage } from './pdfText'
@@ -13,8 +13,9 @@ export async function extractPdfText(bytes: Uint8Array, selection: string) {
   const source = await loadPageDocument(bytes), count = source.getPageCount()
   const pages = selection.trim() ? parsePageSelection(selection, count) : Array.from({ length: count }, (_, i) => i + 1)
   if (pages.length > PDF_TEXT_LIMITS.pages) throw new Error('一次最多提取50页，请缩小页码范围。')
-  auditPdfPreview(source)
-  // Normalize the admitted document, avoiding any second parser's recovery of original syntax.
+  preparePdfTextResources(source)
+  // The transient text-only copy replaces proven images before PDF.js can construct image filters.
+  // No source bytes or exported PDF are modified.
   const prepared = await source.save({ useObjectStreams: false, updateFieldAppearances: false })
   if (prepared.length > 16 * 1024 * 1024) throw new Error('规范化PDF超过16MiB。')
   let resourceError: unknown

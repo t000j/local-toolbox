@@ -52,7 +52,7 @@ This is a bounded live view, not an OS snapshot. External processes can act afte
 
 ## Remaining product gaps
 
-#34 remains **partially implemented because of functional exclusions**, not merely because Windows testing is pending:
+#34 implements the original inspect/manage workflow in the listed sources. The following sources/operations remain explicitly excluded; Windows acceptance is a separate outstanding gate (see [scope and verification](scope-and-verification.md)):
 
 - Scheduled-task inventory/management is not implemented. Safely handling trigger types, principals, running instances, protected tasks and enablement semantics needs its own preview and recovery design
 - `StartupApproved` state is not modified or used to claim actual enablement; restoring a registration can leave it disabled by Windows or policy

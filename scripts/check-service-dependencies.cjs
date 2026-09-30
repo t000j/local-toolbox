@@ -136,7 +136,7 @@ async function main() {
     'request.fingerprint.len() == 64', 'request.names.len() <= 32', 'request.names.last() == Some(&request.name)',
     'unique.insert(n.to_lowercase())', 'request.confirmed && valid_name', 'request.expected == expected']) ok(rust.includes(s))
   const vue = read('src/tools/components/ServiceManagerTool.vue')
-  for (const s of ['完整核验范围', 'service.state', 'service.nextState', '我已核对以上全部服务', '原子互斥', '隐式启动依赖', '部分实现']) ok(vue.includes(s))
+  for (const s of ['完整核验范围', 'service.state', 'service.nextState', '我已核对以上全部服务', '原子互斥', '隐式启动依赖', '驱动、服务组、暂停/过渡状态及超限依赖仍不支持']) ok(vue.includes(s))
   console.log(`${checks} service plan/parser, mocked confirmation/lifecycle and native-source assertions passed. Windows/PowerShell/C# NOT executed.`)
 }
 main().catch(e => { console.error(e); process.exitCode = 1 })

@@ -56,7 +56,7 @@ onBeforeUnmount(() => { disposed = true; dismiss(); rows.value = []; notice.valu
 <template>
   <div class="tool-form">
     <p class="form-hint">本机 Windows 普通服务。手动读取，默认只读；列表最多 500 条、依赖图最多 32 项，每次命令 64 KiB / 20 秒。结果不完整时禁止变更；不提权、不绕过权限。</p>
-    <p class="form-hint">启动时先启动停止的前置依赖；停止时先停止正在运行的被依赖服务。已处于目标状态的节点仅核验。不改启动类型、不强制停止、不创建或删除服务。驱动、服务组、暂停/过渡状态及超限依赖仍不支持，因此为部分实现。</p>
+    <p class="form-hint">启动时先启动停止的前置依赖；停止时先停止正在运行的被依赖服务。已处于目标状态的节点仅核验。不改启动类型、不强制停止、不创建或删除服务。驱动、服务组、暂停/过渡状态及超限依赖仍不支持，属于明确范围限制。</p>
     <div class="action-buttons"><button class="primary-button" :disabled="busy || changing" @click="read()">读取 / 刷新</button>
       <button v-if="busy" class="secondary-button" :disabled="cancelling" @click="cancel">取消等待</button></div>
     <label><input v-model="editing" type="checkbox" :disabled="busy || changing" @change="dismiss" /> 本次页面允许预览变更（每次另行确认）</label>

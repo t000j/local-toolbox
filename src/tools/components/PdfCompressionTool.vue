@@ -35,7 +35,7 @@ onBeforeUnmount(() => { disposed = true; revision++ })
       <button class="primary-button" :disabled="!acknowledged || saving" @click="saveOutput">{{ saving ? '保存中…' : '另存新PDF（不覆盖）' }}</button>
     </template>
     <p class="form-hint" role="status">{{ error || notice || (busy ? '本机逐张重编码并重读校验…' : '') }}</p>
-    <p class="form-hint">当前部分实现：共用静态PDF准入支持经典xref/有界对象流；加密、表单/签名、链接/注释、脚本/附件、混合/增量xref等会拒绝，不静默移除。图片仅支持原始灰度/RGB、无预测器单层Flate、方向1且无ICC的灰度/三通道JPEG；透明蒙版、ICC/CMYK、其他编码/特殊参数、Form内图片或共享绘制/字体/元数据用途的流保留原样并报告。不降采样、无整页栅格化、不是恶意文件清洗或匿名化工具。仅处理可信输入。</p>
+    <p class="form-hint">存在明确支持范围：共用静态PDF准入支持经典xref/有界对象流；加密、表单/签名、链接/注释、脚本/附件、混合/增量xref等会拒绝，不静默移除。图片仅支持原始灰度/RGB、无预测器单层Flate、方向1且无ICC的灰度/三通道JPEG；透明蒙版、ICC/CMYK、其他编码/特殊参数、Form内图片或共享绘制/字体/元数据用途的流保留原样并报告。不降采样、无整页栅格化、不是恶意文件清洗或匿名化工具。仅处理可信输入。</p>
     <p class="form-hint">输入8MiB/输出16MiB/200页/64个图片资源；每图1200万像素/4096边长，处理像素总计1600万，源分量累计32MiB，逐图双RGBA暂存96MiB；30秒Worker超时，逐张释放Bitmap/Canvas，编辑/取消/离页终止。只保存重编码图片实际更小的替换；若全无替换，结果逐字节等于原输入。Windows保存/真实Canvas未验证。</p>
   </div>
 </template>

@@ -1,6 +1,6 @@
 # Environment editing: bounded user-variable changes
 
-Roadmap item **35 remains partially implemented**. This pass expands ordinary current-user variables from editing existing nonempty values to explicit **add, edit and delete**, including empty strings. System-variable editing, protected/security-sensitive variables and additional workflows listed below remain unavailable; “partial” is a product-scope statement, not simply a lack of Windows testing.
+Roadmap item **35 implements the original bounded workflow** (view user/system values and preview ordinary user changes). This pass expands ordinary current-user variables from editing existing nonempty values to explicit **add, edit and delete**, including empty strings. System-variable editing, protected/security-sensitive variables and additional workflows listed below remain unavailable; these are explicit exclusions, separately tracked from Windows acceptance; see [scope and verification](scope-and-verification.md).
 
 ## Supported scope
 

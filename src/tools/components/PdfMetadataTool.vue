@@ -23,7 +23,7 @@ function clear() { file.value = null; reset() }
       <p class="form-hint">{{ result.xmpStatus }}</p>
       <textarea v-if="result.xmp" :value="result.xmp" readonly rows="12" aria-label="原始Metadata文本" spellcheck="false" />
     </template>
-    <p class="form-hint">部分实现：标题/作者/主题/关键词/创建工具/日期等Info原始声明，以及Catalog的UTF-8原始Metadata文本；日期不转换时区或验证真实性。属性由文件作者填写，可能伪造或含隐私，和实际内容不一致；未显示不代表不存在。Info非标量只提示不展开；不遍历页面/图片/附件等内部元数据，不做脱敏。</p>
+    <p class="form-hint">支持范围：标题/作者/主题/关键词/创建工具/日期等Info原始声明，以及Catalog的UTF-8原始Metadata文本；日期不转换时区或验证真实性。属性由文件作者填写，可能伪造或含隐私，和实际内容不一致；未显示不代表不存在。Info非标量只提示不展开；不遍历页面/图片/附件等内部元数据，不做脱敏。</p>
     <p class="form-hint">只读本机处理，不解码页面图片、不上传/修改/保存，不执行XML/脚本或加载实体/链接；字段纯文本显示，控制/双向格式字符转义。沿用静态PDF准入，加密、交互/链接/表单/签名、混合/增量xref等拒绝，并非通用属性检查器。</p>
     <p class="form-hint">输入8MiB/200页/6000对象，20秒可终止Worker；Info最多64字段/单字段65536字符/总256Ki字符，Metadata仅原始或单层Flate、编码/展开各256KiB。取消/换文件/离页终止。Windows WebView界面未验证。</p>
   </div>

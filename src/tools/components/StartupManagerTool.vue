@@ -45,7 +45,7 @@ onBeforeUnmount(() => { disposed = true; closePreview(); notice.value = ''; quer
 <template>
   <div class="tool-form">
     <p class="form-hint">按来源手动读取，默认只读。每个来源最多 500 条 / 64 KiB / 20 秒，完整读取后才允许逐项确认。不会执行命令、解析快捷方式目标、自动提权或更改权限。</p>
-    <p class="form-hint">仍为部分实现：RunOnce 仅查看；计划任务、策略与其他自启来源未覆盖，不修改 Windows StartupApproved 标记。已登记不代表会运行，恢复也不保证 Windows 会启动它。注册表视图可能共享同一实际键。</p>
+    <p class="form-hint">范围限制：RunOnce 仅查看；计划任务、策略与其他自启来源未覆盖，不修改 Windows StartupApproved 标记。已登记不代表会运行，恢复也不保证 Windows 会启动它。注册表视图可能共享同一实际键。</p>
     <label>来源 <select v-model="source" class="native-input" :disabled="busy || changing" @change="resetSource"><option v-for="s in STARTUP_SOURCES" :key="s.id" :value="s.id">{{ s.label }}</option></select></label>
     <div class="action-buttons"><button class="primary-button" :disabled="busy || changing" @click="read()">读取 / 刷新</button><button v-if="busy" class="secondary-button" :disabled="cancelling" @click="task.cancel">取消等待</button></div>
     <p v-if="folder" class="form-hint">仅本地正常目录及单硬链接普通文件；不读启动文件内容。禁用将原文件无覆盖移到启动文件夹旁的专用 .LocalToolbox-StartupBackup 文件夹，保留内容、标识与 ACL；恢复原路移回，备份位置不再保有该文件。重解析点、网络/重定向、占用或不支持的条目会阻止本来源修改。</p>

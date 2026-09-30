@@ -38,7 +38,7 @@ const busy = computed(() => inspecting.value || generating.value)
       <button class="primary-button" :disabled="!acknowledged || saving" @click="saveOutput">{{ saving ? '保存中…' : '另存新PDF（不覆盖）' }}</button>
     </template>
     <p class="form-hint" role="status">{{ error || inspectionError || notice || (busy ? '正在本机处理并校验…' : '') }}</p>
-    <p class="form-hint">当前部分实现：支持PDF1.0–1.7经典xref及有界单次保存ObjStm/XRef；拒绝混合/增量xref、间接流长度、加密、表单/签名/注释/链接/动作/脚本/附件/外部引用/目录/分层/标签等结构。不会绕过保护或静默扁平化；不是恶意PDF清洗器，只处理可信来源。此页不嵌入外部阅读器。</p>
+    <p class="form-hint">存在明确支持范围：支持PDF1.0–1.7经典xref及有界单次保存ObjStm/XRef；支持经典xref的一跳整数间接流长度；拒绝混合/增量xref、其他间接长度、加密、表单/签名/注释/链接/动作/脚本/附件/外部引用/目录/分层/标签等结构。不会绕过保护或静默扁平化；不是恶意PDF清洗器，只处理可信来源。此页不嵌入外部阅读器。</p>
     <p class="form-hint">最多200页/输入8MiB/输出16MiB，每次Worker任务30秒；取消/清空/离页终止。保留所选页原内容/资源/框和原角度（旋转操作除外），不保留文档级元数据/身份，页面内容仍可能含隐私。新建保存拒绝覆盖，提交保存后不能撤回。Windows实际界面与原生保存尚未验证。</p>
   </div>
 </template>
