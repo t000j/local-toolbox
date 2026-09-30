@@ -54,6 +54,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const SyntheticDataTool = defineAsyncComponent(() => import('./components/SyntheticDataTool.vue'))
 const RandomGeneratorTool = defineAsyncComponent(() => import('./components/RandomGeneratorTool.vue'))
 const PasswordGeneratorTool = defineAsyncComponent(() => import('./components/PasswordGeneratorTool.vue'))
 const JwtViewerTool = defineAsyncComponent(() => import('./components/JwtViewerTool.vue'))
@@ -71,6 +72,16 @@ const YamlFormatterTool = defineAsyncComponent(() => import('./components/YamlFo
 
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  {
+    id: 'synthetic-data',
+    name: '测试数据生成器',
+    description: '按本地模板生成标明虚构的 JSON、CSV 或 SQLite SQL 样例。',
+    category: 'data',
+    keywords: ['测试数据', '虚构', 'synthetic', 'mock', '样例', 'json', 'csv', 'sql', '姓名', '邮箱'],
+    icon: Sparkles,
+    tone: 'green',
+    component: SyntheticDataTool,
+  },
   {
     id: 'random-generator',
     name: '随机数与字符串',
