@@ -1,6 +1,6 @@
 # LocalToolbox
 
-基于 Tauri 2、Vue 3、TypeScript 和 Rust 的 Windows 本地工具箱，当前源码已注册 60 款内置工具。工具在本机运行，不需要自建后端或线上数据库。
+基于 Tauri 2、Vue 3、TypeScript 和 Rust 的 Windows 本地工具箱，当前源码已注册 61 款内置工具。工具在本机运行，不需要自建后端或线上数据库。
 
 源码仓库：[t000j/local-toolbox](https://github.com/t000j/local-toolbox)。采用 [MIT License](LICENSE)，第三方依赖遵循各自许可证。
 
@@ -33,6 +33,8 @@
 准备自己发布新版本时，按 [新版本发布教程](docs/HOW_TO_RELEASE.md) 操作；教程包含版本同步、更新说明、源码推送、Actions 构建、正式发布和旧版更新验证。
 
 ## 当前功能
+
+- DNS 缓存查看与刷新：手动查看 Windows DNS 缓存；清空前显示影响并二次确认，命令不自动提权，权限不足显示失败；取消不能撤销已清空的缓存。15 秒总时限、64 KiB 原始输出，缓存可能包含访问域名，仅本机显示且不保存
 
 - DNS 查询：手动向默认 DNS 服务器查询 A / AAAA / CNAME / MX / TXT / NS / SOA / PTR；ASCII 域名或 IP，域名按完整名称查询，不添加搜索后缀；15 秒总时限、64 KiB 原始输出，不把退出码等同于解析成功
 

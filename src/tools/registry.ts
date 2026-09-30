@@ -74,8 +74,11 @@ const YamlFormatterTool = defineAsyncComponent(() => import('./components/YamlFo
 
 const DnsQueryTool = defineAsyncComponent(() => import('./components/DnsQueryTool.vue'))
 
+const DnsCacheTool = defineAsyncComponent(() => import('./components/DnsCacheTool.vue'))
+
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  { id: 'dns-cache', name: 'DNS 缓存查看与刷新', description: '手动查看本机 DNS 缓存，明确确认后清空缓存。', category: 'system-network', keywords: ['dns', '缓存', '刷新', 'flushdns', 'displaydns'], icon: Globe, tone: 'blue', component: DnsCacheTool },
   { id: 'dns-query', name: 'DNS 查询', description: '手动查询指定域名的 DNS 记录，保留系统原始输出。', category: 'system-network', keywords: ['dns', '解析', '域名', 'nslookup', 'mx', 'txt'], icon: Globe, tone: 'blue', component: DnsQueryTool },
   {
     id: 'traceroute',

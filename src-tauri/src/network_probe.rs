@@ -586,9 +586,32 @@ pub async fn run_dns_query(job_id: String, target: String, record_type: String) 
     }).await.map_err(|error| format!("诊断工作线程异常结束：{error}"))?
 }
 
+fn dns_cache_args(flush: bool, confirmed: bool) -> Result<Vec<String>, String> {
+    if flush && !confirmed { return Err("请先确认清空本机 DNS 缓存的影响。".to_owned()); }
+    Ok(vec![if flush { "/flushdns" } else { "/displaydns" }.to_owned()])
+}
+
+#[tauri::command]
+pub async fn run_dns_cache(job_id: String, flush: bool, confirmed: bool) -> Result<ProbeExecution, String> {
+    let lease = registry().acquire(&job_id)?;
+    let started = Instant::now();
+    tauri::async_runtime::spawn_blocking(move || {
+        let args = dns_cache_args(flush, confirmed)?;
+        // No elevation or retry with different permissions. Never release/renew adapters.
+        execute_probe(&lease, "ipconfig.exe", &args, started, Duration::from_secs(15))
+    }).await.map_err(|error| format!("诊断工作线程异常结束：{error}"))?
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn dns_cache_requires_explicit_flush_confirmation() {
+        assert_eq!(dns_cache_args(false, false).unwrap(), ["/displaydns"]);
+        assert_eq!(dns_cache_args(true, true).unwrap(), ["/flushdns"]);
+        assert!(dns_cache_args(true, false).is_err());
+    }
 
     #[test]
     fn dns_arguments_are_fixed_and_validated() {
