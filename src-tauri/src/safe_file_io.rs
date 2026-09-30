@@ -88,6 +88,7 @@ impl NewFile {
         if unsafe {SetFileInformationByHandle(self.file.as_raw_handle(),4,(&flag as *const u8).cast(),1)}==0 {return Err(err());} Ok(())
     }
     pub(crate) fn persist(&mut self) -> Result<(),String> { self.file.sync_all().map_err(|_|err())?; self.mark_delete(false) }
+    pub(crate) fn retain(&mut self) -> Result<(),String> { self.mark_delete(false) }
     pub(crate) fn accept(&mut self) { self.committed=true; }
 }
 impl Drop for NewFile { fn drop(&mut self) { if !self.committed { let _=self.mark_delete(true); } } }

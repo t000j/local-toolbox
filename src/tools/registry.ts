@@ -106,8 +106,11 @@ const FolderCompareTool = defineAsyncComponent(() => import('./components/Folder
 
 const FileListTool = defineAsyncComponent(() => import('./components/FileListTool.vue'))
 
+const FilePartsTool = defineAsyncComponent(() => import('./components/FilePartsTool.vue'))
+
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  { id: 'file-parts', name: '文件分割与合并', description: '按大小流式分割二进制文件，凭有序清单与 SHA-256 合并。', category: 'files', keywords: ['split', 'merge', '分割', '合并', '二进制'], icon: FolderOpen, tone: 'blue', component: FilePartsTool },
   { id: 'file-list', name: '文件清单导出', description: '预览所选目录结构，导出安全转义的 CSV 或文本清单。', category: 'files', keywords: ['csv', '清单', '目录', '导出'], icon: FolderOpen, tone: 'blue', component: FileListTool },
   { id: 'folder-compare', name: '文件夹结构比较', description: '只读比较两个所选目录的相对名称、类型、大小和时间。', category: 'files', keywords: ['folder', '比较', '目录', '差异'], icon: FolderOpen, tone: 'blue', component: FolderCompareTool },
   { id: 'duplicate-files', name: '重复文件查找', description: '仅在所选文件夹内按大小与完整 SHA-256 查找重复候选。', category: 'files', keywords: ['duplicates', '重复文件', 'sha256', '哈希'], icon: Hash, tone: 'violet', component: DuplicateFilesTool },

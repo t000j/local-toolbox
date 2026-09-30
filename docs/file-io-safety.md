@@ -34,3 +34,30 @@ Validation in this Linux workspace: TypeScript/pure synthetic logic, mocked
 lifecycle, and source guardrails only. Windows Rust/FFI compilation, filesystem
 behavior and desktop UI have **not** been run. The existing native scanner test
 uses its own disposable fixtures only; it is an opt-in Windows check.
+
+## Binary split/merge
+
+- 512 MiB total, 1–64 MiB per part, at most 512 parts, 256 KiB manifest
+- Fixed 256 KiB copy buffer. SHA-256 uses the already locked `sha2 0.10.9`
+  package, now listed directly in Cargo.toml (no additional package is resolved)
+- Split reserves all create-only output names before streaming, hashes each part
+  and whole input, and rereads generated parts before publishing the manifest
+- Merge accepts version 1 only. Array indexes, generated basenames, count, exact
+  sizes, per-part SHA-256 and total SHA-256 must match. Names cannot contain paths
+- Input identities, size, modified time and change time are rechecked. Source and
+  manifest remain read-only; part reads resolve against the retained manifest
+  directory. A checksum provides integrity, not proof of a trusted sender
+- Cancellation and a 120-second cooperative deadline are checked during IO and
+  pre-commit flushing. A pending synchronous Windows IO may delay those checks
+- All outputs remain delete-pending until validation and flushing finish. The
+  short final retention phase deliberately cannot be cancelled. If retention
+  fails, unaccepted handles are re-marked for deletion on Drop; OS/disk failure
+  can still prevent cleanup, and is reported as a reason to inspect outputs
+- This is not multi-file crash-atomic publication: a crash during final retention
+  may leave complete parts or a manifest. Existing originals are never cleaned up
+
+Additional opt-in Windows tests (not run in this workspace):
+`cargo test file_parts -- --test-threads=1` covers synthetic binary round-trip,
+empty files, corruption, missing parts, conflicting outputs, cleanup and cancelled
+jobs; stream tests include interruption after one block and short reads.
+`cargo test safe_file_io -- --test-threads=1` covers create-only/pending/retain IO.

@@ -16,6 +16,9 @@ mod monitor_info;
 mod file_scan;
 mod safe_file_io;
 mod file_export;
+mod file_parts;
+mod file_parts_manifest;
+mod file_parts_stream;
 mod local_reports;
 mod native_windows;
 mod screenshot;
@@ -60,6 +63,7 @@ pub fn run() {
             monitor_info::read_monitor_info,
             file_scan::run_file_scan,
             file_export::save_file_list,
+            file_parts::run_file_parts,
             network_probe::prepare_network_probe,
             network_probe::run_dns_query,
             network_probe::run_dns_cache,
