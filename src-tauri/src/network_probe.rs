@@ -429,7 +429,9 @@ fn clip_output(output: &mut String) -> bool {
     true
 }
 
-struct ProbeExecution {
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProbeExecution {
     output: String,
     status: ProbeStatus,
     exit_code: Option<i32>,
@@ -561,9 +563,42 @@ pub async fn run_traceroute(job_id: String, target: String, max_hops: u32, timeo
     }).await.map_err(|error| format!("诊断工作线程异常结束：{error}"))?
 }
 
+fn dns_args(target: &str, record_type: &str) -> Result<Vec<String>, String> {
+    validate_target(target)?;
+    if !["A", "AAAA", "CNAME", "MX", "TXT", "NS", "SOA", "PTR"].contains(&record_type) {
+        return Err("不支持此 DNS 记录类型。".to_owned());
+    }
+    // A trailing dot prevents implicit search suffixes and command-word ambiguity.
+    let name = if target.parse::<IpAddr>().is_ok() || target.ends_with('.') {
+        target.to_owned()
+    } else { format!("{target}.") };
+    Ok(vec![format!("-type={record_type}"), "-timeout=2".to_owned(),
+        "-retry=1".to_owned(), "-nosearch".to_owned(), name])
+}
+
+#[tauri::command]
+pub async fn run_dns_query(job_id: String, target: String, record_type: String) -> Result<ProbeExecution, String> {
+    let lease = registry().acquire(&job_id)?;
+    let started = Instant::now();
+    tauri::async_runtime::spawn_blocking(move || {
+        let args = dns_args(&target, &record_type)?;
+        execute_probe(&lease, "nslookup.exe", &args, started, Duration::from_secs(15))
+    }).await.map_err(|error| format!("诊断工作线程异常结束：{error}"))?
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn dns_arguments_are_fixed_and_validated() {
+        assert_eq!(dns_args("example.com", "MX").unwrap(), ["-type=MX", "-timeout=2", "-retry=1", "-nosearch", "example.com."]);
+        assert_eq!(dns_args("192.0.2.1", "PTR").unwrap().last().unwrap(), "192.0.2.1");
+        assert_eq!(dns_args("exit", "A").unwrap().last().unwrap(), "exit.");
+        for kind in ["A", "AAAA", "CNAME", "MX", "TXT", "NS", "SOA", "PTR"] { assert!(dns_args("example.com.", kind).is_ok()); }
+        for kind in ["ANY", "A -debug", "", "a"] { assert!(dns_args("example.com", kind).is_err()); }
+        assert!(dns_args("-", "A").is_err());
+    }
 
     #[test]
     fn target_validation_accepts_plain_dns_and_ip_only() {
