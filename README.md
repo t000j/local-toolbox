@@ -26,7 +26,7 @@
 - 更新从 GitHub Releases 下载，验证签名后由用户确认安装。正在执行本机工具任务时禁止安装。
 - 发布工作流仅由版本标签或手动触发，生成 Release 草稿；推送普通源码提交不触发构建。
 - 更新签名私钥及密码保存在被 Git 忽略的 `.secrets/` 中，对应的 GitHub Actions Secrets 已配置，源码仓库只包含公钥。
-- [LocalToolbox 0.1.1](https://github.com/t000j/local-toolbox/releases/tag/v0.1.1) 已正式发布，安装包、更新签名及 latest.json 可公开下载；已安装的英文版 0.1.0 可在“关于与更新”检查更新。
+- [LocalToolbox 0.1.2](https://github.com/t000j/local-toolbox/releases/tag/v0.1.2) 已正式发布，安装包、更新签名及 latest.json 可公开下载；已安装的英文版 0.1.0 / 0.1.1 可在“关于与更新”检查更新。
 
 详见 [发布与更新指南](docs/RELEASING.md)、[产品规划](docs/PRODUCT_PLAN.md)。在原工作目录修改规划后运行 `npm run docs:sync` 同步仓库文档。
 
