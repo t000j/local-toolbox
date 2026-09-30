@@ -55,6 +55,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const SqlFormatterTool = defineAsyncComponent(() => import('./components/SqlFormatterTool.vue'))
 const CsvViewerTool = defineAsyncComponent(() => import('./components/CsvViewerTool.vue'))
 const XmlFormatterTool = defineAsyncComponent(() => import('./components/XmlFormatterTool.vue'))
 const YamlFormatterTool = defineAsyncComponent(() => import('./components/YamlFormatterTool.vue'))
@@ -120,6 +121,16 @@ export const tools: ToolDefinition[] = [
     icon: ListFilter,
     tone: 'green',
     component: CsvViewerTool,
+  },
+  {
+    id: 'sql',
+    name: 'SQL 格式化器',
+    description: '按 SQL 方言整理缩进与关键字大小写，不执行语句。',
+    category: 'data',
+    keywords: ['sql', 'mysql', 'postgresql', 'sqlite', '格式化', '数据库'],
+    icon: Braces,
+    tone: 'blue',
+    component: SqlFormatterTool,
   },
   {
     id: 'base64',
