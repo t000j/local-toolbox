@@ -1,6 +1,6 @@
 # LocalToolbox
 
-基于 Tauri 2、Vue 3、TypeScript 和 Rust 的 Windows 本地工具箱，当前源码已注册 87 款内置工具。工具在本机运行，不需要自建后端或线上数据库。
+基于 Tauri 2、Vue 3、TypeScript 和 Rust 的 Windows 本地工具箱，当前源码已注册 88 款内置工具。工具在本机运行，不需要自建后端或线上数据库。
 
 源码仓库：[t000j/local-toolbox](https://github.com/t000j/local-toolbox)。采用 [MIT License](LICENSE)，第三方依赖遵循各自许可证。
 
@@ -123,6 +123,7 @@
 - 条形码生成：CODE128、EAN-13、EAN-8、UPC-A、CODE39，支持 PNG / SVG 导出
 - 文本清理器：逐行去空格、删除空行、删除重复行、排序并统一换行格式，支持即时预览与复制
 - 批量重命名：前后缀添加或文件名查找替换，先预览冲突，确认后改名并支持撤销
+- Favicon生成器：方向校正后完整缩入透明方形或居中裁切；PNG可选16–512常见尺寸，ICO包含16/32/48/64/128/256 PNG图层。现代PNG-in-ICO格式，预览并安全另存
 - 图片调色板提取：静态 PNG/JPEG 方向校正后最多256×256取样，提取1–16代表色；透明阈值与Alpha加权占比，明确量化/取样误差，可复制HEX
 - 颜色格式转换：本机互转 HEX/RGB/HSL 与透明度，支持短 HEX、数值/百分比、角度单位、逗号及空格语法；严格范围校验，规范化预览与复制，明确 8 位 HEX 量化和小数舍入
 - 屏幕取色器：手动启动 EyeDropper、点选屏幕像素返回 sRGB HEX；Esc/取消/30 秒/离页中止，不后台采样或保存图像。需运行环境提供该 API，Windows WebView2 多屏/DPI 实际行为待验

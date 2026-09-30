@@ -5,6 +5,7 @@ import JsonFormatterTool from './components/JsonFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
+const FaviconTool = defineAsyncComponent(() => import('./components/FaviconTool.vue'))
 const ImagePaletteTool = defineAsyncComponent(() => import('./components/ImagePaletteTool.vue'))
 const ColorFormatTool = defineAsyncComponent(() => import('./components/ColorFormatTool.vue'))
 const ScreenColorPickerTool = defineAsyncComponent(() => import('./components/ScreenColorPickerTool.vue'))
@@ -591,6 +592,7 @@ export const tools: ToolDefinition[] = [
     tone: 'blue',
     component: BatchRenameTool,
   },
+  { id: 'favicon', name: 'Favicon 生成器', description: '本地图片生成常见 PNG 尺寸或多图层 ICO，预览后另存。', category: 'files', keywords: ['favicon', '网站图标', 'ICO', 'PNG'], icon: ImageIcon, tone: 'blue', component: FaviconTool },
   { id: 'image-palette', name: '图片调色板提取', description: '本机取样并提取代表色，按透明度加权显示占比及复制 HEX。', category: 'files', keywords: ['调色板', '主色', '图片颜色', 'palette'], icon: ImageIcon, tone: 'blue', component: ImagePaletteTool },
   { id: 'color-format', name: '颜色格式转换', description: '互转 HEX、RGB 和 HSL，保留透明度并显示量化与范围说明。', category: 'files', keywords: ['颜色', 'HEX', 'RGB', 'HSL', '透明度', 'color'], icon: ImageIcon, tone: 'blue', component: ColorFormatTool },
   { id: 'screen-color-picker', name: '屏幕取色器', description: '手动启动系统取色界面，点选一个屏幕像素并复制 sRGB 色值。', category: 'files', keywords: ['取色', '屏幕', '颜色', 'HEX', 'eyedropper'], icon: ImageIcon, tone: 'blue', component: ScreenColorPickerTool },
