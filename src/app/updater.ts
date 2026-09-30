@@ -5,6 +5,7 @@ import { check, type Update } from '@tauri-apps/plugin-updater'
 import { relaunch } from '@tauri-apps/plugin-process'
 import appPackage from '../../package.json'
 import { activeNativeTasks, claimUpdateInstallation, releaseUpdateInstallation } from './activity'
+import { restoredKeys, settingsRestoredEvent } from './settingsEvents'
 
 type UpdateStatus = 'idle' | 'checking' | 'current' | 'available' | 'downloading' | 'downloaded' | 'installing' | 'restartReady' | 'error'
 const preferenceKey = 'toolbox:auto-update:v1'
@@ -24,6 +25,11 @@ const progressPercent = computed(() => totalBytes.value ? Math.min(100, Math.rou
 let update: Update | null = null
 let initialized = false
 let startupTimer: number | undefined
+let listeningForSettings = false
+
+function onSettingsRestored(event: Event): void {
+  if (restoredKeys(event).includes(preferenceKey)) autoCheck.value = readPreference()
+}
 
 function readPreference(): boolean {
   try { return localStorage.getItem(preferenceKey) !== 'false' } catch { return true }
@@ -48,6 +54,7 @@ function errorText(cause: unknown): string {
 }
 
 async function initialize(): Promise<void> {
+  if (!listeningForSettings) { window.addEventListener(settingsRestoredEvent, onSettingsRestored); listeningForSettings = true }
   if (initialized) return
   initialized = true
   if (isTauri()) {
@@ -110,6 +117,7 @@ async function installUpdate(): Promise<void> {
 
 function dispose(): void {
   window.clearTimeout(startupTimer)
+  if (listeningForSettings) { window.removeEventListener(settingsRestoredEvent, onSettingsRestored); listeningForSettings = false }
   if (update && !busy.value) void update.close().catch(() => undefined)
 }
 

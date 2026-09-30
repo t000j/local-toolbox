@@ -21,6 +21,7 @@ import { categoryLabels, tools } from './tools/registry'
 import type { ToolDefinition } from './tools/types'
 import UpdaterPanel from './app/UpdaterPanel.vue'
 import { useUpdater } from './app/updater'
+import { restoredKeys, settingsRestoredEvent } from './app/settingsEvents'
 
 const favoriteKey = 'toolbox:favorites:v1'
 const query = ref('')
@@ -127,8 +128,11 @@ function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && activeToolId.value) closeTool()
 }
 
-onMounted(() => { window.addEventListener('keydown', onKeydown); void updater.initialize() })
-onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown); updater.dispose() })
+function onSettingsRestored(event: Event): void {
+  if (restoredKeys(event).includes(favoriteKey)) favorites.value = readFavorites()
+}
+onMounted(() => { window.addEventListener('keydown', onKeydown); window.addEventListener(settingsRestoredEvent, onSettingsRestored); void updater.initialize() })
+onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown); window.removeEventListener(settingsRestoredEvent, onSettingsRestored); updater.dispose() })
 </script>
 
 <template>

@@ -2,6 +2,8 @@
 
 公开源码仓库：https://github.com/t000j/local-toolbox
 
+按实际操作顺序发布新版本，请先阅读 [新版本发布教程](HOW_TO_RELEASE.md)。本文件记录技术配置、历史发布和验证边界。
+
 ## 技术方案
 
 - 产品名、窗口与快捷方式名称统一为 LocalToolbox，npm 和 Rust 包名为 local-toolbox，主程序为 LocalToolbox.exe；工具名称与操作提示保留中文。

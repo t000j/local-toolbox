@@ -5,6 +5,7 @@ mod network;
 mod local_reports;
 mod native_windows;
 mod screenshot;
+mod settings_backup;
 mod system;
 mod temp_cleanup;
 mod workspace_launch;
@@ -47,6 +48,8 @@ pub fn run() {
             local_reports::export_battery_report,
             local_reports::collect_diagnostic_report,
             local_reports::save_local_report,
+            settings_backup::read_settings_backup,
+            settings_backup::save_settings_backup,
             workspace_launch::launch_workspace,
             disk_tools::list_disk_volumes,
             disk_tools::analyze_disk_space,

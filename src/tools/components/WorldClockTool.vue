@@ -60,10 +60,15 @@ function readSelectedZones(): string[] {
     const stored = localStorage.getItem(storageKey)
     if (stored === null) return [...new Set([localTimeZone, 'Asia/Tokyo', 'Europe/London', 'America/New_York', 'Australia/Sydney'])].slice(0, 12)
     const value: unknown = JSON.parse(stored)
-    return Array.isArray(value) ? [...new Set(value.filter((zone): zone is string => typeof zone === 'string' && zoneSet.has(zone)))].slice(0, 12) : []
+    return Array.isArray(value) ? [...new Set(value.filter((zone): zone is string => typeof zone === 'string' && validStoredZone(zone)))].slice(0, 12) : []
   } catch {
     return [...new Set([localTimeZone, 'Asia/Tokyo', 'Europe/London', 'America/New_York', 'Australia/Sydney'])].slice(0, 12)
   }
+}
+
+function validStoredZone(zone: string): boolean {
+  try { new Intl.DateTimeFormat('zh-CN', { timeZone: zone }).format(0); return true }
+  catch { return false }
 }
 
 function addZone(): void {

@@ -1,6 +1,7 @@
-import { ArrowLeftRight, Barcode, Binary, Braces, Calculator as CalculatorIcon, CalendarDays, Camera, Clipboard, ClipboardCopy, ClipboardPaste, ClipboardPlus, Clock, FolderOpen, Globe, Hash, Image as ImageIcon, ListFilter, Minimize2, Monitor, Pencil, Percent, QrCode, Ruler, Server, Sparkles, Timer as TimerIcon, Wifi } from '@lucide/vue'
+import { ArrowLeftRight, Barcode, Binary, Braces, Calculator as CalculatorIcon, CalendarDays, Camera, Clipboard, ClipboardCopy, ClipboardPaste, ClipboardPlus, Clock, FolderOpen, Globe, Hash, Image as ImageIcon, ListFilter, Minimize2, Monitor, Pencil, Percent, QrCode, Ruler, Search, Server, Sparkles, Timer as TimerIcon, Wifi } from '@lucide/vue'
 import type { ToolDefinition } from './types'
 import JsonFormatterTool from './components/JsonFormatterTool.vue'
+import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
 import Base64Tool from './components/Base64Tool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
@@ -31,6 +32,7 @@ import RegionScreenshotTool from './components/RegionScreenshotTool.vue'
 import ScreenshotAnnotationTool from './components/ScreenshotAnnotationTool.vue'
 import ScreenRulerTool from './components/ScreenRulerTool.vue'
 import DeviceDriversTool from './components/DeviceDriversTool.vue'
+import SettingsBackupTool from './components/SettingsBackupTool.vue'
 
 import WindowControlTool from './components/WindowControlTool.vue'
 
@@ -73,6 +75,16 @@ export const tools: ToolDefinition[] = [
     icon: ArrowLeftRight,
     tone: 'violet',
     component: JsonDiffTool,
+  },
+  {
+    id: 'jsonpath',
+    name: 'JSONPath 查询器',
+    description: '用路径和筛选表达式提取 JSON 数据，查看命中位置与值。',
+    category: 'data',
+    keywords: ['jsonpath', 'JSON 查询', '路径查询', '字段提取', '筛选表达式', '数组', 'RFC 9535'],
+    icon: Search,
+    tone: 'blue',
+    component: JsonPathTool,
   },
   {
     id: 'base64',
@@ -463,6 +475,16 @@ export const tools: ToolDefinition[] = [
     icon: Monitor,
     tone: 'blue',
     component: DeviceDriversTool,
+  },
+  {
+    id: 'settings-backup',
+    name: '设置备份与恢复',
+    description: '按分组备份收藏和本机设置，预览后确认恢复。',
+    category: 'daily',
+    keywords: ['设置', '备份', '恢复', '导出配置', '收藏', '文本片段', '工作区', 'backup'],
+    icon: FolderOpen,
+    tone: 'violet',
+    component: SettingsBackupTool,
   },
 ]
 
