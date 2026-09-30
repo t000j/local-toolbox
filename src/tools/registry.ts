@@ -92,8 +92,11 @@ const EnvironmentManagerTool = defineAsyncComponent(() => import('./components/E
 
 const HostsEditorTool = defineAsyncComponent(() => import('./components/HostsEditorTool.vue'))
 
+const FirewallViewerTool = defineAsyncComponent(() => import('./components/FirewallViewerTool.vue'))
+
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  { id: 'firewall-viewer', name: '防火墙规则查看', description: '只读搜索 Windows 防火墙规则与筛选条件。', category: 'system-network', keywords: ['firewall', '防火墙', '规则', '端口'], icon: Monitor, tone: 'blue', component: FirewallViewerTool },
   { id: 'hosts-editor', name: 'Hosts 文件查看与编辑', description: '预览差异，确认后备份并保存 Hosts；检测外部冲突。', category: 'system-network', keywords: ['hosts', '域名映射', '备份'], icon: Monitor, tone: 'blue', component: HostsEditorTool },
   { id: 'environment-manager', name: '环境变量查看与编辑', description: '查看用户和系统变量，预览确认后编辑普通用户变量。', category: 'system-network', keywords: ['environment', '环境变量', '用户变量'], icon: Monitor, tone: 'blue', component: EnvironmentManagerTool },
   { id: 'startup-manager', name: '开机启动项管理', description: '管理当前用户 Run 子集，确认后备份禁用与恢复。', category: 'system-network', keywords: ['startup', '启动项', 'Run'], icon: Monitor, tone: 'blue', component: StartupManagerTool },
