@@ -33,18 +33,30 @@ pub(crate) fn path_parts(value: &str) -> Result<(String,Vec<String>),String> {
     if parts.len()>64 || !parts.iter().all(|s| crate::file_scan::valid_component(s)) { return Err("路径含无效、保留名称或过多层级。".into()); }
     Ok((p[..3].to_owned(),parts))
 }
-fn relative(parent: &File, name: &str, directory: bool, create: bool) -> Result<File,String> {
+pub(crate) fn relative(parent: &File, name: &str, directory: bool, create: bool) -> Result<File,String> {
     if !crate::file_scan::valid_component(name) { return Err("无效文件名。".into()); }
     let text: Vec<u16> = name.encode_utf16().collect(); let u=Unicode{len:(text.len()*2) as u16,max:(text.len()*2) as u16,text:text.as_ptr()};
     let a=Attributes{len:size_of::<Attributes>() as u32,root:parent.as_raw_handle(),name:&u,attrs:0x1000,sd:null_mut(),qos:null_mut()};
     let mut raw=null_mut(); let mut status=Status{status:0,info:0};
     // OBJ_DONT_REPARSE; FILE_OPEN_REPARSE_POINT | FILE_OPEN_NO_RECALL;
     // exact-case opens, retained parents, share-read only for existing files.
-    let code=unsafe { NtCreateFile(&mut raw,if create {0x110183} else {0x100081},&a,&mut status,null(),0,
+    let code=unsafe { NtCreateFile(&mut raw,if create {if directory {0x110187} else {0x110183}} else {0x100081},&a,&mut status,null(),0,
         if create {0} else {1},if create {2} else {1},0x600020|if directory {1} else {0x40},null_mut(),0) };
     if code<0 { return Err(format!("无法安全打开或新建文件（NT 状态 {code:#x}）；目标可能已存在。")); }
     let file=unsafe {File::from_raw_handle(raw)};
-    check(&file,directory)?; Ok(file)
+    if let Err(error)=check(&file,directory) {
+        // Only FILE_CREATE objects are ours. A failed post-open validation must
+        // not leave an empty new object merely because ownership was not handed
+        // to NewFile/NewTree yet. No existing object is ever marked for deletion.
+        if create {
+            let delete=1u8;
+            if unsafe {SetFileInformationByHandle(file.as_raw_handle(),4,(&delete as *const u8).cast(),1)}==0 {
+                return Err(format!("{error} 新建对象的句柄清理失败，请检查所选输出。"));
+            }
+        }
+        return Err(error);
+    }
+    Ok(file)
 }
 pub(crate) struct Directory { held: Vec<File> }
 impl Directory {
@@ -68,11 +80,10 @@ impl Directory {
         for part in parts { let child=relative(directory.handle(),part,true,false)?; directory.held.push(child); }
         Ok(directory)
     }
-    fn handle(&self) -> &File { self.held.last().expect("retained root") }
+    pub(crate) fn handle(&self) -> &File { self.held.last().expect("retained root") }
     pub(crate) fn read(&self,name: &str) -> Result<File,String> { relative(self.handle(),name,false,false) }
     pub(crate) fn create(&self,name: &str) -> Result<NewFile,String> {
-        let file=relative(self.handle(),name,false,true)?;
-        let mut new=NewFile{file,committed:false}; new.mark_delete(true)?; Ok(new)
+        NewFile::create_at(self.handle(),name)
     }
 }
 #[derive(PartialEq,Eq)] pub(crate) struct Stamp { pub size: u64, volume: u32, id: u64, modified: u64, change: i64 }
@@ -83,6 +94,10 @@ pub(crate) fn stamp(file: &File) -> Result<Stamp,String> {
 }
 pub(crate) struct NewFile { pub file: File, committed: bool }
 impl NewFile {
+    pub(crate) fn create_at(parent: &File,name: &str) -> Result<Self,String> {
+        let file=relative(parent,name,false,true)?;
+        let mut new=Self{file,committed:false}; new.mark_delete(true)?; Ok(new)
+    }
     fn mark_delete(&mut self,delete: bool) -> Result<(),String> {
         let flag=delete as u8;
         if unsafe {SetFileInformationByHandle(self.file.as_raw_handle(),4,(&flag as *const u8).cast(),1)}==0 {return Err(err());} Ok(())
