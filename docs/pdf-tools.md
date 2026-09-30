@@ -20,3 +20,7 @@ Page content/resources are preserved, not malware-sanitized. A malicious compres
 - No real user PDFs were read. Windows dialogs/create-only IO, WebView UI and clipboard remain unverified; cloud local-browser access was blocked and not bypassed
 
 Compatibility with object streams, forms/annotations, richer document structures and broader PDF variants remains open, so the roadmap marks this tool partial. Library reference: [PDFDocument API](https://pdf-lib.js.org/docs/api/classes/pdfdocument) and [load options](https://pdf-lib.js.org/docs/api/interfaces/loadoptions).
+
+## Page extraction (62, partial)
+
+Read and audit one ≤8 MiB source, then select comma-separated page numbers or ascending ranges, e.g. `1-3,5`. Selection order is output order; overlap, duplicate pages, descending ranges, empty tokens and out-of-range pages are errors. Export one new PDF per selection; repeat for additional parts. Page count/geometry is shown, not content thumbnails. Source bytes remain unchanged. Output is reloaded and fingerprints must match every selected source page, including its original rotation. The same format/feature limitations above apply. Synthetic Poppler output for source pages 4 and 2 matched each source raster byte-for-byte. Mock editor tests cover edits, cancellation state, duplicate saves and stale save completion; actual UI/native saving remains untested.
