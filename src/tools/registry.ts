@@ -55,6 +55,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const RegexTesterTool = defineAsyncComponent(() => import('./components/RegexTesterTool.vue'))
 const MarkdownPreviewTool = defineAsyncComponent(() => import('./components/MarkdownPreviewTool.vue'))
 const SqlFormatterTool = defineAsyncComponent(() => import('./components/SqlFormatterTool.vue'))
 const CsvViewerTool = defineAsyncComponent(() => import('./components/CsvViewerTool.vue'))
@@ -142,6 +143,16 @@ export const tools: ToolDefinition[] = [
     icon: Pencil,
     tone: 'violet',
     component: MarkdownPreviewTool,
+  },
+  {
+    id: 'regex',
+    name: '正则表达式测试器',
+    description: '测试 JavaScript 正则匹配，查看位置与捕获组，支持超时取消。',
+    category: 'data',
+    keywords: ['regex', 'regexp', '正则', '表达式', '匹配', '捕获组'],
+    icon: Search,
+    tone: 'green',
+    component: RegexTesterTool,
   },
   {
     id: 'base64',

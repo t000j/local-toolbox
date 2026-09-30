@@ -1,6 +1,6 @@
 # LocalToolbox
 
-基于 Tauri 2、Vue 3、TypeScript 和 Rust 的 Windows 本地工具箱，当前源码已注册 48 款内置工具。工具在本机运行，不需要自建后端或线上数据库。
+基于 Tauri 2、Vue 3、TypeScript 和 Rust 的 Windows 本地工具箱，当前源码已注册 49 款内置工具。工具在本机运行，不需要自建后端或线上数据库。
 
 源码仓库：[t000j/local-toolbox](https://github.com/t000j/local-toolbox)。采用 [MIT License](LICENSE)，第三方依赖遵循各自许可证。
 
@@ -42,7 +42,7 @@
 - JSON 差异比较：忽略对象键顺序，按路径展示新增、删除、修改；数组按索引比较
 - XML 格式化与结构校验：保留混合文本和 CDATA，拒绝 DTD 与实体声明
 - YAML 格式化、校验与 JSON 互转：本机处理 YAML 1.2 的 JSON 兼容子集，限制别名展开并防止数值精度丢失
-- CSV 表格查看器、SQL 格式化器、Markdown 预览器：本地 UTF-8 文件或粘贴输入，支持引号与多行字段、分页筛选及 JSON 导出，值保留为字符串
+- CSV 表格查看器、SQL 格式化器、Markdown 预览器、正则表达式测试器：本地 UTF-8 文件或粘贴输入，支持引号与多行字段、分页筛选及 JSON 导出，值保留为字符串
 - UTF-8 Base64 文本编解码
 - UUID v4 生成器：生成 1–100 个随机标识并复制
 - 哈希摘要独立归类，支持 MD5、SHA-1 和 SHA-256/384/512；选择 MD5 / SHA-1 时提示其安全用途限制
