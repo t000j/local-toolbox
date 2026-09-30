@@ -88,8 +88,11 @@ const ServiceManagerTool = defineAsyncComponent(() => import('./components/Servi
 
 const StartupManagerTool = defineAsyncComponent(() => import('./components/StartupManagerTool.vue'))
 
+const EnvironmentManagerTool = defineAsyncComponent(() => import('./components/EnvironmentManagerTool.vue'))
+
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  { id: 'environment-manager', name: '环境变量查看与编辑', description: '查看用户和系统变量，预览确认后编辑普通用户变量。', category: 'system-network', keywords: ['environment', '环境变量', '用户变量'], icon: Monitor, tone: 'blue', component: EnvironmentManagerTool },
   { id: 'startup-manager', name: '开机启动项管理', description: '管理当前用户 Run 子集，确认后备份禁用与恢复。', category: 'system-network', keywords: ['startup', '启动项', 'Run'], icon: Monitor, tone: 'blue', component: StartupManagerTool },
   { id: 'service-manager', name: 'Windows 服务管理器', description: '只读查询服务，逐项确认后安全范围内启动或停止。', category: 'system-network', keywords: ['service', '服务', '启动', '停止'], icon: Monitor, tone: 'blue', component: ServiceManagerTool },
   { id: 'process-viewer', name: '进程查看器', description: '只读查看进程名称、PID、工作集内存与累计 CPU 时间。', category: 'system-network', keywords: ['process', '进程', 'pid', '内存', 'cpu'], icon: Monitor, tone: 'blue', component: ProcessViewerTool },

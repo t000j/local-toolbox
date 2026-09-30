@@ -1,4 +1,5 @@
 # Exact ordinal matching avoids wildcard/name interpretation; no elevation or Force.
+Add-Type -AssemblyName System.ServiceProcess
 $services = [ServiceProcess.ServiceController]::GetServices()
 try {
     if ($request.action -ne 'list') {
@@ -18,6 +19,8 @@ try {
             $service.WaitForStatus([ServiceProcess.ServiceControllerStatus]::Stopped, [TimeSpan]::FromSeconds(8))
         } else { throw 'Invalid action' }
         $service.Refresh()
+        $wanted = if ($request.action -eq 'start') { 'Running' } else { 'Stopped' }
+        if ($service.Status.ToString() -cne $wanted) { throw 'Final service state changed' }
         [Console]::WriteLine((@{ verified = $true; name = $service.ServiceName; state = $service.Status.ToString() } | ConvertTo-Json -Compress))
     } else {
         $count = 0

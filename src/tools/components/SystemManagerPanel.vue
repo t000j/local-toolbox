@@ -30,12 +30,12 @@ async function apply() {
       confirmed: true, ...(props.command === 'run_service_manager' ? {} : {
         value: row.value, kind: row.kind, newValue: newValue.value, scope: row.scope,
       }) } })
-    const r = result.value
+    const r = result.value, failure = error.value
     const verified = r?.status === 'completed' && r.exitCode === 0 && r.output.split(/\r?\n/).some(line => {
       try { return JSON.parse(line).verified === true } catch { return false }
     })
     notice.value = verified ? '操作后的目标状态已核验。正在重新读取；下次变更仍需重新确认。'
-      : '操作结果未核验，可能已部分生效。正在只读重查；请勿直接重试。'
+      : `操作结果未核验，可能已部分生效。${failure ? '本次操作返回错误。' : ''}正在只读重查；请勿直接重试。`
     if (!disposed) await read()
   } finally { changing.value = false }
 }
