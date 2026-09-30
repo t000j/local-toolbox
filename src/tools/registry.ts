@@ -55,6 +55,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const CsvViewerTool = defineAsyncComponent(() => import('./components/CsvViewerTool.vue'))
 const XmlFormatterTool = defineAsyncComponent(() => import('./components/XmlFormatterTool.vue'))
 const YamlFormatterTool = defineAsyncComponent(() => import('./components/YamlFormatterTool.vue'))
 
@@ -109,6 +110,16 @@ export const tools: ToolDefinition[] = [
     icon: Braces,
     tone: 'blue',
     component: YamlFormatterTool,
+  },
+  {
+    id: 'csv',
+    name: 'CSV 表格查看器',
+    description: '读取本地 CSV，分页筛选并导出 JSON。',
+    category: 'data',
+    keywords: ['csv', 'tsv', '表格', '分隔符', '筛选', 'json', '导出'],
+    icon: ListFilter,
+    tone: 'green',
+    component: CsvViewerTool,
   },
   {
     id: 'base64',
