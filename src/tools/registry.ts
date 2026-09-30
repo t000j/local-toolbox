@@ -78,8 +78,11 @@ const DnsCacheTool = defineAsyncComponent(() => import('./components/DnsCacheToo
 
 const TcpConnectionsTool = defineAsyncComponent(() => import('./components/TcpConnectionsTool.vue'))
 
+const LanDiscoveryTool = defineAsyncComponent(() => import('./components/LanDiscoveryTool.vue'))
+
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  { id: 'lan-discovery', name: '局域网设备发现', description: '手动发现已连接私有子网中响应 ICMP 的设备，最多 62 台。', category: 'system-network', keywords: ['lan', '局域网', '设备', '发现', 'icmp'], icon: Wifi, tone: 'blue', component: LanDiscoveryTool },
   { id: 'tcp-connections', name: 'TCP 连接查看器', description: '只读查看 IPv4/IPv6 TCP 连接、监听状态与关联 PID。', category: 'system-network', keywords: ['tcp', '连接', 'netstat', 'pid', '监听', '进程'], icon: Globe, tone: 'blue', component: TcpConnectionsTool },
   { id: 'dns-cache', name: 'DNS 缓存查看与刷新', description: '手动查看本机 DNS 缓存，明确确认后清空缓存。', category: 'system-network', keywords: ['dns', '缓存', '刷新', 'flushdns', 'displaydns'], icon: Globe, tone: 'blue', component: DnsCacheTool },
   { id: 'dns-query', name: 'DNS 查询', description: '手动查询指定域名的 DNS 记录，保留系统原始输出。', category: 'system-network', keywords: ['dns', '解析', '域名', 'nslookup', 'mx', 'txt'], icon: Globe, tone: 'blue', component: DnsQueryTool },

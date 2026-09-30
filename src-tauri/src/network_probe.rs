@@ -4,8 +4,9 @@
 //! and its RAII lease lives in the blocking worker until process/readers are gone.
 //! A cancellation never kills by PID and cannot target a later probe.
 use serde::Serialize;
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use std::ffi::{c_void, OsString};
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 use std::net::IpAddr;
 use std::os::windows::ffi::OsStringExt;
 use std::os::windows::process::CommandExt;
@@ -58,10 +59,10 @@ pub struct PingResult {
     target: String,
     count: u32,
     timeout_ms: u32,
-    output: String,
-    status: ProbeStatus,
-    exit_code: Option<i32>,
-    elapsed_ms: u64,
+    pub(crate) output: String,
+    pub(crate) status: ProbeStatus,
+    pub(crate) exit_code: Option<i32>,
+    pub(crate) elapsed_ms: u64,
 }
 
 #[derive(Serialize)]
@@ -71,10 +72,10 @@ pub struct TracerouteResult {
     target: String,
     max_hops: u32,
     timeout_ms: u32,
-    output: String,
-    status: ProbeStatus,
-    exit_code: Option<i32>,
-    elapsed_ms: u64,
+    pub(crate) output: String,
+    pub(crate) status: ProbeStatus,
+    pub(crate) exit_code: Option<i32>,
+    pub(crate) elapsed_ms: u64,
 }
 
 struct JobControl {
@@ -152,13 +153,13 @@ impl ProbeRegistry {
     }
 }
 
-struct JobLease {
+pub(crate) struct JobLease {
     slot: JobSlot,
     control: Arc<JobControl>,
 }
 
 impl JobLease {
-    fn cancelled(&self) -> bool {
+    pub(crate) fn cancelled(&self) -> bool {
         self.control.cancelled.load(Ordering::Acquire)
     }
 }
@@ -355,6 +356,7 @@ struct ProbeProcess {
     reaped: bool,
     stdout: Option<OutputReader>,
     stderr: Option<OutputReader>,
+    stdin: Option<JoinHandle<io::Result<()>>>,
 }
 
 impl ProbeProcess {
@@ -379,6 +381,7 @@ impl ProbeProcess {
         // The root process is reaped by every caller; also close the job before
         // joining so an unexpected descendant cannot retain an inherited pipe.
         self.job.take();
+        if let Some(writer) = self.stdin.take() { let _ = writer.join(); }
         fn join(reader: Option<OutputReader>) -> Result<Vec<u8>, String> {
             match reader {
                 Some(reader) => reader.join().map_err(|_| "诊断输出读取线程异常结束。".to_owned())?,
@@ -432,10 +435,10 @@ fn clip_output(output: &mut String) -> bool {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProbeExecution {
-    output: String,
-    status: ProbeStatus,
-    exit_code: Option<i32>,
-    elapsed_ms: u64,
+    pub(crate) output: String,
+    pub(crate) status: ProbeStatus,
+    pub(crate) exit_code: Option<i32>,
+    pub(crate) elapsed_ms: u64,
 }
 
 /// Common bounded runner for fixed executables, validated argument lists and
@@ -447,6 +450,14 @@ fn execute_probe(
     started: Instant,
     deadline: Duration,
 ) -> Result<ProbeExecution, String> {
+    execute_with_input(lease, executable, args, started, deadline, None)
+}
+
+fn execute_with_input(
+    lease: &JobLease, executable: &str, args: &[String], started: Instant,
+    deadline: Duration, input: Option<Vec<u8>>,
+) -> Result<ProbeExecution, String> {
+    let utf8 = input.is_some();
     let empty_result = |status| ProbeExecution {
         output: String::new(), status, exit_code: None, elapsed_ms: started.elapsed().as_millis() as u64,
     };
@@ -458,17 +469,23 @@ fn execute_probe(
     if started.elapsed() >= deadline { return Ok(empty_result(ProbeStatus::Timeout)); }
     let child = Command::new(path)
         .args(args)
-        .stdin(Stdio::null())
+        .stdin(if input.is_some() { Stdio::piped() } else { Stdio::null() })
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .creation_flags(CREATE_NO_WINDOW)
         .spawn()
         .map_err(|error| format!("启动 Windows 诊断命令失败：{error}"))?;
-    let mut process = ProbeProcess { child, job: Some(job), reaped: false, stdout: None, stderr: None };
+    let mut process = ProbeProcess { child, job: Some(job), reaped: false, stdout: None, stderr: None, stdin: None };
     // Stable std::Command cannot assign a job atomically with process creation.
     // Abrupt application death in this tiny spawn-to-assignment interval is the
     // remaining best-effort exit-cleanup limitation; later exits are kernel-covered.
     if let Some(job) = &process.job { job.assign(&process.child)?; }
+    if let Some(input) = input {
+        let mut pipe = process.child.stdin.take().ok_or("无法打开任务输入管道。")?;
+        process.stdin = Some(thread::Builder::new().name("diagnostic-input".to_owned()).spawn(move || {
+            pipe.write_all(&input)
+        }).map_err(|_| "无法创建任务输入线程。")?);
+    }
     let budget = Arc::new(CaptureBudget::new());
     let stdout = process.child.stdout.take().ok_or_else(|| "无法打开诊断标准输出。".to_owned())?;
     let stderr = process.child.stderr.take().ok_or_else(|| "无法打开诊断错误输出。".to_owned())?;
@@ -495,8 +512,9 @@ fn execute_probe(
         thread::sleep(POLL_INTERVAL.min(deadline.saturating_sub(started.elapsed())));
     };
     let (stdout, stderr) = process.join_readers()?;
-    let mut output = decode_oem(&stdout)?;
-    let stderr = decode_oem(&stderr)?;
+    let decode = |bytes: &[u8]| if utf8 { Ok(String::from_utf8_lossy(bytes).into_owned()) } else { decode_oem(bytes) };
+    let mut output = decode(&stdout)?;
+    let stderr = decode(&stderr)?;
     if !stderr.is_empty() {
         if !output.is_empty() && !output.ends_with('\n') { output.push('\n'); }
         output.push_str(&stderr);
@@ -513,6 +531,22 @@ fn execute_probe(
         elapsed_ms: started.elapsed().as_millis() as u64,
     })
 }
+
+/// Only crate-owned scripts reach this helper. User data travels as JSON on stdin,
+/// never interpolated into code, command arguments, an environment or a file.
+pub(crate) fn execute_script(
+    lease: &JobLease, script: &str, input: &serde_json::Value, started: Instant, deadline: Duration,
+) -> Result<ProbeExecution, String> {
+    let source = format!("$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; [Console]::InputEncoding=[Text.UTF8Encoding]::new($false); [Console]::OutputEncoding=[Text.UTF8Encoding]::new($false); try {{ $request = [Console]::In.ReadToEnd() | ConvertFrom-Json; & {{\n{script}\n}} }} catch {{ [Console]::Error.WriteLine('Local query failed; check inputs and Windows permissions.'); exit 1 }}");
+    let utf16: Vec<u8> = source.encode_utf16().flat_map(u16::to_le_bytes).collect();
+    let args = vec!["-NoLogo".to_owned(), "-NoProfile".to_owned(), "-NonInteractive".to_owned(),
+        "-EncodedCommand".to_owned(), STANDARD.encode(utf16)];
+    let bytes = serde_json::to_vec(input).map_err(|_| "无法准备任务参数。")?;
+    if bytes.len() > 256 * 1024 { return Err("任务输入超过 256 KiB。".to_owned()); }
+    execute_with_input(lease, "WindowsPowerShell/v1.0/powershell.exe", &args, started, deadline, Some(bytes))
+}
+
+pub(crate) fn acquire_job(job_id: &str) -> Result<JobLease, String> { registry().acquire(job_id) }
 
 #[tauri::command]
 pub fn prepare_network_probe() -> Result<String, String> {

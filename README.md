@@ -1,6 +1,6 @@
 # LocalToolbox
 
-基于 Tauri 2、Vue 3、TypeScript 和 Rust 的 Windows 本地工具箱，当前源码已注册 62 款内置工具。工具在本机运行，不需要自建后端或线上数据库。
+基于 Tauri 2、Vue 3、TypeScript 和 Rust 的 Windows 本地工具箱，当前源码已注册 63 款内置工具。工具在本机运行，不需要自建后端或线上数据库。
 
 源码仓库：[t000j/local-toolbox](https://github.com/t000j/local-toolbox)。采用 [MIT License](LICENSE)，第三方依赖遵循各自许可证。
 
@@ -33,6 +33,8 @@
 准备自己发布新版本时，按 [新版本发布教程](docs/HOW_TO_RELEASE.md) 操作；教程包含版本同步、更新说明、源码推送、Actions 构建、正式发布和旧版更新验证。
 
 ## 当前功能
+
+- 局域网设备发现：仅手动探测已连接 Ethernet / Wi-Fi 的 RFC1918 私有 IPv4 子网中的 /26–/30 范围，最多 62 个地址、并发 1、每台 1 次 ICMP / 500 毫秒，总时限 40 秒。后端再次验证范围和本机实际子网；不扫描端口、不反向解析、不自动保存。用户必须明确确认有权探测；无响应不能认定离线。输入通过 stdin JSON，固定内置脚本，取消/超时复用进程树清理。
 
 - TCP 连接查看器：手动读取 IPv4/IPv6 TCP 连接与监听快照，显示本地/远端地址、状态、PID 与尽力匹配的进程名；本机筛选、50 行分页、最多 2000 行。netstat 与 tasklist 合计 20 秒，每份输出最多 64 KiB，不自动刷新、不解析远端域名、不结束进程
 
