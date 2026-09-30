@@ -1,6 +1,7 @@
 import { ArrowLeftRight, Barcode, Binary, Braces, Calculator as CalculatorIcon, CalendarDays, Camera, Clipboard, ClipboardCopy, ClipboardPaste, ClipboardPlus, Clock, FolderOpen, Globe, Hash, Image as ImageIcon, ListFilter, Minimize2, Monitor, Pencil, Percent, QrCode, Ruler, Search, Server, Sparkles, Timer as TimerIcon, Wifi } from '@lucide/vue'
 import type { ToolDefinition } from './types'
 import JsonFormatterTool from './components/JsonFormatterTool.vue'
+import XmlFormatterTool from './components/XmlFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
 import Base64Tool from './components/Base64Tool.vue'
@@ -85,6 +86,16 @@ export const tools: ToolDefinition[] = [
     icon: Search,
     tone: 'blue',
     component: JsonPathTool,
+  },
+  {
+    id: 'xml',
+    name: 'XML 格式化与校验',
+    description: '本地校验 XML 结构并整理缩进，保留混合文本。',
+    category: 'data',
+    keywords: ['xml', '格式化', '结构校验', '缩进'],
+    icon: Braces,
+    tone: 'violet',
+    component: XmlFormatterTool,
   },
   {
     id: 'base64',
