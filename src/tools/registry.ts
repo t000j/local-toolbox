@@ -54,6 +54,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const PingTool = defineAsyncComponent(() => import('./components/PingTool.vue'))
 const SyntheticDataTool = defineAsyncComponent(() => import('./components/SyntheticDataTool.vue'))
 const RandomGeneratorTool = defineAsyncComponent(() => import('./components/RandomGeneratorTool.vue'))
 const PasswordGeneratorTool = defineAsyncComponent(() => import('./components/PasswordGeneratorTool.vue'))
@@ -72,6 +73,16 @@ const YamlFormatterTool = defineAsyncComponent(() => import('./components/YamlFo
 
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  {
+    id: 'ping',
+    name: 'Ping 测试',
+    description: '向你指定的主机发送有限次数的 ICMP 连通性与延迟探测。',
+    category: 'system-network',
+    keywords: ['ping', '网络', '连通性', '延迟', 'icmp'],
+    icon: Wifi,
+    tone: 'blue',
+    component: PingTool,
+  },
   {
     id: 'synthetic-data',
     name: '测试数据生成器',
