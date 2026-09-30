@@ -5,7 +5,7 @@ import JsonFormatterTool from './components/JsonFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
-import HashTool from './components/HashTool.vue'
+const HashTool = defineAsyncComponent(() => import('./components/HashTool.vue'))
 import TimestampTool from './components/TimestampTool.vue'
 import UnitConverterTool from './components/UnitConverterTool.vue'
 import QrCodeTool from './components/QrCodeTool.vue'
