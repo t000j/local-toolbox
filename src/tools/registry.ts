@@ -54,6 +54,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const TracerouteTool = defineAsyncComponent(() => import('./components/TracerouteTool.vue'))
 const PingTool = defineAsyncComponent(() => import('./components/PingTool.vue'))
 const SyntheticDataTool = defineAsyncComponent(() => import('./components/SyntheticDataTool.vue'))
 const RandomGeneratorTool = defineAsyncComponent(() => import('./components/RandomGeneratorTool.vue'))
@@ -73,6 +74,16 @@ const YamlFormatterTool = defineAsyncComponent(() => import('./components/YamlFo
 
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  {
+    id: 'traceroute',
+    name: '路由追踪',
+    description: '追踪到指定主机的网络路径，有限跳数与总时限，支持取消。',
+    category: 'system-network',
+    keywords: ['路由', 'traceroute', 'tracert', '网络路径', '跳数'],
+    icon: Globe,
+    tone: 'violet',
+    component: TracerouteTool,
+  },
   {
     id: 'ping',
     name: 'Ping 测试',

@@ -21,6 +21,7 @@ const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 const MAX_OUTPUT_BYTES: usize = 64 * 1024;
 const PREPARED_JOB_TTL: Duration = Duration::from_secs(30);
 const PING_DEADLINE: Duration = Duration::from_secs(30);
+const TRACEROUTE_DEADLINE: Duration = Duration::from_secs(60);
 const POLL_INTERVAL: Duration = Duration::from_millis(15);
 
 #[link(name = "kernel32")]
@@ -56,6 +57,19 @@ pub struct PingResult {
     job_id: String,
     target: String,
     count: u32,
+    timeout_ms: u32,
+    output: String,
+    status: ProbeStatus,
+    exit_code: Option<i32>,
+    elapsed_ms: u64,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TracerouteResult {
+    job_id: String,
+    target: String,
+    max_hops: u32,
     timeout_ms: u32,
     output: String,
     status: ProbeStatus,
@@ -192,6 +206,18 @@ fn validate_target(target: &str) -> Result<(), String> {
         return Err("主机名每段限 1–63 个英文字母、数字或中划线，首尾不能是中划线。".to_owned());
     }
     Ok(())
+}
+
+fn traceroute_args(target: &str, max_hops: u32, timeout_ms: u32) -> Result<Vec<String>, String> {
+    validate_target(target)?;
+    if !(1..=30).contains(&max_hops) { return Err("最大跳数应为 1–30 跳。".to_owned()); }
+    if !(250..=2000).contains(&timeout_ms) { return Err("每次回复超时应为 250–2000 毫秒。".to_owned()); }
+    // Disable reverse lookups for intermediate hops; resolving a hostname target
+    // still uses system DNS. Each value remains a separate argument, with no shell.
+    Ok(vec![
+        "-d".to_owned(), "-h".to_owned(), max_hops.to_string(),
+        "-w".to_owned(), timeout_ms.to_string(), target.to_owned(),
+    ])
 }
 
 fn system_executable(name: &str) -> Result<PathBuf, String> {
@@ -410,8 +436,8 @@ struct ProbeExecution {
     elapsed_ms: u64,
 }
 
-/// Common bounded runner; a future traceroute can supply its own fixed executable,
-/// validated argument list and deadline without weakening ownership or cancellation.
+/// Common bounded runner for fixed executables, validated argument lists and
+/// deadlines, with identical ownership and cancellation for Ping and traceroute.
 fn execute_probe(
     lease: &JobLease,
     executable: &str,
@@ -480,7 +506,7 @@ fn execute_probe(
     Ok(ProbeExecution {
         output,
         status,
-        // Forced-termination exit codes are not Ping results.
+        // Forced-termination exit codes are not diagnostic results.
         exit_code: if status == ProbeStatus::Completed { exit_status.code() } else { None },
         elapsed_ms: started.elapsed().as_millis() as u64,
     })
@@ -517,6 +543,24 @@ pub async fn run_ping(job_id: String, target: String, count: u32, timeout_ms: u3
     }).await.map_err(|error| format!("诊断工作线程异常结束：{error}"))?
 }
 
+#[tauri::command]
+pub async fn run_traceroute(job_id: String, target: String, max_hops: u32, timeout_ms: u32) -> Result<TracerouteResult, String> {
+    // Use the same single-token lease as Ping. Validation errors consume the
+    // reservation, and cancelling never releases the slot before worker cleanup.
+    let lease = registry().acquire(&job_id)?;
+    let started = Instant::now();
+    tauri::async_runtime::spawn_blocking(move || {
+        let _lease = lease;
+        let args = traceroute_args(&target, max_hops, timeout_ms)?;
+        let execution = execute_probe(&_lease, "tracert.exe", &args, started, TRACEROUTE_DEADLINE)?;
+        Ok(TracerouteResult {
+            job_id, target, max_hops, timeout_ms,
+            output: execution.output, status: execution.status,
+            exit_code: execution.exit_code, elapsed_ms: execution.elapsed_ms,
+        })
+    }).await.map_err(|error| format!("诊断工作线程异常结束：{error}"))?
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -533,6 +577,54 @@ mod tests {
         assert!(validate_target(&format!("{}.test", "a".repeat(64))).is_err());
         assert!(validate_target(&["a".repeat(63), "b".repeat(63), "c".repeat(63), "d".repeat(61)].join(".")).is_ok());
         assert!(validate_target(&["a".repeat(63), "b".repeat(63), "c".repeat(63), "d".repeat(62)].join(".")).is_err());
+    }
+
+    #[test]
+    fn traceroute_arguments_are_fixed_and_disable_reverse_dns() {
+        assert_eq!(traceroute_args("example.com", 30, 2000).unwrap(), ["-d", "-h", "30", "-w", "2000", "example.com"]);
+        assert_eq!(traceroute_args("2001:db8::1", 1, 250).unwrap(), ["-d", "-h", "1", "-w", "250", "2001:db8::1"]);
+        assert_eq!(TRACEROUTE_DEADLINE, Duration::from_secs(60));
+        assert_eq!(PING_DEADLINE, Duration::from_secs(30));
+    }
+
+    #[test]
+    fn traceroute_configuration_accepts_inclusive_bounds() {
+        for max_hops in [1, 15, 30] {
+            for timeout_ms in [250, 1000, 2000] {
+                assert!(traceroute_args("localhost", max_hops, timeout_ms).is_ok());
+            }
+        }
+    }
+
+    #[test]
+    fn traceroute_configuration_rejects_out_of_range_values() {
+        for max_hops in [0, 31, u32::MAX] {
+            assert!(traceroute_args("localhost", max_hops, 1000).is_err());
+        }
+        for timeout_ms in [0, 249, 2001, u32::MAX] {
+            assert!(traceroute_args("localhost", 30, timeout_ms).is_err());
+        }
+    }
+
+    #[test]
+    fn traceroute_rejects_targets_before_constructing_arguments() {
+        for target in ["", "-d", "a -h 99", "https://example.com", "a&whoami", "example.com:80", "fe80::1%12"] {
+            assert!(traceroute_args(target, 30, 1000).is_err(), "{target}");
+        }
+    }
+
+    #[test]
+    fn invalid_traceroute_configuration_releases_claimed_slot() {
+        let registry = ProbeRegistry::default();
+        for (max_hops, timeout_ms) in [(0, 1000), (30, 249)] {
+            let id = registry.prepare().unwrap();
+            let result = (|| -> Result<Vec<String>, String> {
+                let _lease = registry.acquire(&id)?;
+                traceroute_args("localhost", max_hops, timeout_ms)
+            })();
+            assert!(result.is_err());
+            assert!(lock_slot(&registry.slot).is_none());
+        }
     }
 
     #[test]

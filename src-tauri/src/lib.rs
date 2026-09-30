@@ -37,6 +37,7 @@ pub fn run() {
             image_conversion::compress_image_file,
             network_probe::prepare_network_probe,
             network_probe::run_ping,
+            network_probe::run_traceroute,
             network_probe::cancel_network_probe,
             network::get_network_info,
             network::find_port_owners,
