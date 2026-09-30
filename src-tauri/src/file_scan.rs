@@ -26,7 +26,7 @@ pub struct FileScanRequest {
     before_ms: Option<i64>,
 }
 
-fn valid_component(component: &str) -> bool {
+pub(crate) fn valid_component(component: &str) -> bool {
     if component.is_empty() || component.encode_utf16().count() > 255
         || component.ends_with('.') || component.ends_with(' ')
         || component.chars().any(|ch| ch.is_control() || "<>:\"/\\|?*".contains(ch)) {

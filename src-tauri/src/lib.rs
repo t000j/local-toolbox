@@ -14,6 +14,8 @@ mod firewall_viewer;
 mod power_actions;
 mod monitor_info;
 mod file_scan;
+mod safe_file_io;
+mod file_export;
 mod local_reports;
 mod native_windows;
 mod screenshot;
@@ -57,6 +59,7 @@ pub fn run() {
             power_actions::run_power_action,
             monitor_info::read_monitor_info,
             file_scan::run_file_scan,
+            file_export::save_file_list,
             network_probe::prepare_network_probe,
             network_probe::run_dns_query,
             network_probe::run_dns_cache,
