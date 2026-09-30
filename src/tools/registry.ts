@@ -54,6 +54,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const JwtViewerTool = defineAsyncComponent(() => import('./components/JwtViewerTool.vue'))
 const UnicodeTool = defineAsyncComponent(() => import('./components/UnicodeTool.vue'))
 const HtmlEntitiesTool = defineAsyncComponent(() => import('./components/HtmlEntitiesTool.vue'))
 const UrlCodecTool = defineAsyncComponent(() => import('./components/UrlCodecTool.vue'))
@@ -207,6 +208,16 @@ export const tools: ToolDefinition[] = [
     icon: Binary,
     tone: 'violet',
     component: UnicodeTool,
+  },
+  {
+    id: 'jwt-viewer',
+    name: 'JWT 内容查看器',
+    description: '本机解码 Header 和 Payload；不验证签名，不保存令牌。',
+    category: 'data',
+    keywords: ['jwt', 'token', 'header', 'payload', '令牌', '解码'],
+    icon: Braces,
+    tone: 'amber',
+    component: JwtViewerTool,
   },
   {
     id: 'uuid',
