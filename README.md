@@ -1,6 +1,6 @@
 # LocalToolbox
 
-基于 Tauri 2、Vue 3、TypeScript 和 Rust 的 Windows 本地工具箱，当前源码已注册 95 款内置工具。工具在本机运行，不需要自建后端或线上数据库。
+基于 Tauri 2、Vue 3、TypeScript 和 Rust 的 Windows 本地工具箱，当前源码已注册 96 款内置工具。工具在本机运行，不需要自建后端或线上数据库。
 
 源码仓库：[t000j/local-toolbox](https://github.com/t000j/local-toolbox)。采用 [MIT License](LICENSE)，第三方依赖遵循各自许可证。
 
@@ -123,6 +123,7 @@
 - 条形码生成：CODE128、EAN-13、EAN-8、UPC-A、CODE39，支持 PNG / SVG 导出
 - 文本清理器：逐行去空格、删除空行、删除重复行、排序并统一换行格式，支持即时预览与复制
 - 批量重命名：前后缀添加或文件名查找替换，先预览冲突，确认后改名并支持撤销
+- PDF文本提取（部分实现）：读取已有文字，保留PDF.js项目顺序/换行及页码分隔，导出UTF-8；不做OCR，复杂阅读顺序需核对
 - 图片转PDF：1–8张静态PNG/JPEG按顺序一图一页，EXIF方向校正、A4/Letter/像素-DPI纸张与边距、等比完整居中；PNG保留绘制后透明度或JPEG白底有损编码，校验后安全另存
 - PDF转图片（部分实现）：按页码/DPI在独立可终止Worker内生成PNG/JPEG，保留可见裁切区与旋转/UserUnit，逐页预览和安全另存；输入资源兼容范围受限
 - PDF图片压缩（部分实现）：调节JPEG质量，仅在候选图片更小时替换受支持的8位RGB资源；文字/矢量/页面框保持，显示实际前后大小，无收益则明确提示，安全另存
