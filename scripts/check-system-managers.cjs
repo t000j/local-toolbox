@@ -80,7 +80,7 @@ async function main() {
   ok(!startup.includes('$backup.DeleteValue')); ok(startup.includes('DoNotExpandEnvironmentNames'))
   const env = fs.readFileSync('src-tauri/src/native_scripts/environment_manager.ps1', 'utf8')
   ok(env.includes('Sensitive-Name')); ok(env.includes('Protected-Name')); ok(env.includes('Missing existing variable'))
-  ok(!env.includes('DeleteValue')); ok(!env.includes('CreateSubKey')); ok(!env.includes('SetEnvironmentVariable'))
+  ok(env.includes("$request.action -eq 'delete'")); ok(env.includes("Add conflict; no overwrite")); ok(!env.includes('SetEnvironmentVariable'))
   const registry = fs.readFileSync('src/tools/registry.ts', 'utf8')
   eq((registry.match(/id: '/g) || []).length, Number(fs.readFileSync('README.md', 'utf8').match(/当前源码已注册 (\d+) 款/)[1]))
   console.log(`${checks} parser, mocked lifecycle and static safety assertions passed. Windows native tests NOT run.`)
