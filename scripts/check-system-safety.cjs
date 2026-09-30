@@ -77,7 +77,7 @@ async function main() {
   const ps = read('src-tauri/src/native_scripts/firewall_viewer.ps1')
   for (const s of ['Get-NetFirewallRule -PolicyStore ActiveStore', 'Select-Object -First 1001', 'Get-NetFirewallPortFilter', 'Get-NetFirewallAddressFilter', 'Get-NetFirewallApplicationFilter', 'Get-NetFirewallServiceFilter']) ok(ps.includes(s))
   ok(!/Set-NetFirewall|New-NetFirewall|Remove-NetFirewall|Enable-NetFirewall|Disable-NetFirewall|Start-Process|RunAs|Invoke-Expression/.test(ps))
-  eq((read('src/tools/registry.ts').match(/id: '/g) || []).length, 71)
+  eq((read('src/tools/registry.ts').match(/id: '/g) || []).length, Number(fs.readFileSync('README.md', 'utf8').match(/当前源码已注册 (\d+) 款/)[1]))
   console.log(`${checks} parser, mock lifecycle/countdown and static safety assertions passed. Native Windows NOT run.`)
 }
 main().catch(e => { console.error(e); process.exitCode = 1 })

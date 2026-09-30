@@ -98,8 +98,11 @@ const PowerActionsTool = defineAsyncComponent(() => import('./components/PowerAc
 
 const MonitorInfoTool = defineAsyncComponent(() => import('./components/MonitorInfoTool.vue'))
 
+const FileSearchTool = defineAsyncComponent(() => import('./components/FileSearchTool.vue'))
+
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  { id: 'file-search', name: '本地文件搜索', description: '仅在所选文件夹内按名称、扩展名、大小与修改时间搜索。', category: 'files', keywords: ['search', '文件搜索', '文件名', '扩展名'], icon: Search, tone: 'blue', component: FileSearchTool },
   { id: 'monitor-info', name: '显示器信息查看', description: '只读查看分辨率、缩放和显示器排列。', category: 'system-network', keywords: ['monitor', '显示器', '屏幕', '缩放', '分辨率'], icon: Monitor, tone: 'blue', component: MonitorInfoTool },
   { id: 'power-actions', name: '电源操作面板', description: '查看影响并确认后锁屏、睡眠、注销、重启或关机。', category: 'system-network', keywords: ['power', '锁屏', '睡眠', '重启', '关机', '注销'], icon: Monitor, tone: 'amber', component: PowerActionsTool },
   { id: 'firewall-viewer', name: '防火墙规则查看', description: '只读搜索 Windows 防火墙规则与筛选条件。', category: 'system-network', keywords: ['firewall', '防火墙', '规则', '端口'], icon: Monitor, tone: 'blue', component: FirewallViewerTool },
