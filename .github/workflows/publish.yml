@@ -1,0 +1,83 @@
+name: Windows installer and updater release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish-windows:
+    if: github.repository == 't000j/local-toolbox'
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Check release version and configuration
+        run: node scripts/check-release.mjs
+
+      - name: Ensure signing secrets are configured
+        shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { throw 'TAURI_SIGNING_PRIVATE_KEY is missing.' }
+          if (-not $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD) { throw 'TAURI_SIGNING_PRIVATE_KEY_PASSWORD is missing.' }
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Generate release notes
+        id: release-notes
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $taskVersion = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $taskTag = 'v' + $taskVersion
+          $taskNotes = & gh api --method POST ('repos/' + $env:GITHUB_REPOSITORY + '/releases/generate-notes') --raw-field ('tag_name=' + $taskTag) --raw-field ('target_commitish=' + $env:GITHUB_SHA) --jq '.body'
+          if ($LASTEXITCODE -ne 0) { throw 'Release notes generation failed.' }
+          $taskDelimiter = 'NOTES_' + [guid]::NewGuid().ToString('N')
+          ('body<<' + $taskDelimiter) | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          'Windows x64：下载 setup.exe 安装。' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          '' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          $taskNotes | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          $taskDelimiter | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Build signed NSIS installer and create release draft
+        uses: tauri-apps/tauri-action@944946e3e4cac6603d1fe8f514171e9ecd3c78aa # v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: v__VERSION__
+          releaseName: '本地工具箱 v__VERSION__'
+          releaseBody: ${{ steps.release-notes.outputs.body }}
+          releaseDraft: true
+          prerelease: false
+          uploadUpdaterJson: true
+          updaterJsonPreferNsis: true
+          args: --target x86_64-pc-windows-msvc

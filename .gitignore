@@ -1,0 +1,22 @@
+node_modules/
+.npm-cache/
+dist/
+dist-ssr/
+*.log
+src-tauri/target/
+src-tauri/gen/schemas/
+.DS_Store
+Thumbs.db
+
+# Local credentials and release tooling
+.env
+.env.*
+!.env.example
+.secrets/
+.local-tools/
+*.key
+*.pfx
+*.p12
+*.p8
+*.pem
+!*.pub.pem
