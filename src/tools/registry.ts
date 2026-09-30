@@ -54,6 +54,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const UnicodeTool = defineAsyncComponent(() => import('./components/UnicodeTool.vue'))
 const HtmlEntitiesTool = defineAsyncComponent(() => import('./components/HtmlEntitiesTool.vue'))
 const UrlCodecTool = defineAsyncComponent(() => import('./components/UrlCodecTool.vue'))
 const Base64Tool = defineAsyncComponent(() => import('./components/Base64Tool.vue'))
@@ -196,6 +197,16 @@ export const tools: ToolDefinition[] = [
     icon: Braces,
     tone: 'blue',
     component: HtmlEntitiesTool,
+  },
+  {
+    id: 'unicode',
+    name: 'Unicode 查看与转义',
+    description: '按码点查看字符与 UTF-16 码元，转换字面 Unicode 转义。',
+    category: 'data',
+    keywords: ['unicode', '码点', 'utf16', '编码', '解码', '转义', '字符'],
+    icon: Binary,
+    tone: 'violet',
+    component: UnicodeTool,
   },
   {
     id: 'uuid',
