@@ -55,6 +55,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const TextDiffTool = defineAsyncComponent(() => import('./components/TextDiffTool.vue'))
 const RegexTesterTool = defineAsyncComponent(() => import('./components/RegexTesterTool.vue'))
 const MarkdownPreviewTool = defineAsyncComponent(() => import('./components/MarkdownPreviewTool.vue'))
 const SqlFormatterTool = defineAsyncComponent(() => import('./components/SqlFormatterTool.vue'))
@@ -153,6 +154,16 @@ export const tools: ToolDefinition[] = [
     icon: Search,
     tone: 'green',
     component: RegexTesterTool,
+  },
+  {
+    id: 'text-diff',
+    name: '文本差异比较',
+    description: '逐行比较两段文本，标出新增和删除，分页查看变化。',
+    category: 'data',
+    keywords: ['text diff', '文本', '差异', '比较', '变化行'],
+    icon: ArrowLeftRight,
+    tone: 'violet',
+    component: TextDiffTool,
   },
   {
     id: 'base64',
