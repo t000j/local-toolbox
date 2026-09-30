@@ -54,6 +54,7 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const HtmlEntitiesTool = defineAsyncComponent(() => import('./components/HtmlEntitiesTool.vue'))
 const UrlCodecTool = defineAsyncComponent(() => import('./components/UrlCodecTool.vue'))
 const Base64Tool = defineAsyncComponent(() => import('./components/Base64Tool.vue'))
 const TextDiffTool = defineAsyncComponent(() => import('./components/TextDiffTool.vue'))
@@ -185,6 +186,16 @@ export const tools: ToolDefinition[] = [
     icon: Globe,
     tone: 'blue',
     component: UrlCodecTool,
+  },
+  {
+    id: 'html-entities',
+    name: 'HTML 实体编解码',
+    description: '转换常见命名实体和 Unicode 数字实体，结果仅作为纯文本显示。',
+    category: 'data',
+    keywords: ['html', '实体', '编码', '解码', '转义', '特殊字符'],
+    icon: Braces,
+    tone: 'blue',
+    component: HtmlEntitiesTool,
   },
   {
     id: 'uuid',
