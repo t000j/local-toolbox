@@ -1,4 +1,4 @@
-export interface FileRow { path: string; name: string; bytes: number; modifiedMs: number; hash?: string }
+export interface FileRow { path: string; name: string; bytes: number; modifiedMs: number; hash?: string; kind?: 'file' | 'directory' }
 export interface ScanSummary { visited: number; skipped: number; limited: boolean; failed: boolean; reasons: string[] }
 export function parseFileScan(output: string) {
   const rows: FileRow[] = [], seen = new Set<string>()
@@ -15,6 +15,7 @@ export function parseFileScan(output: string) {
       if (!r || typeof r.path !== 'string' || !r.path || r.path.length > 32768 || typeof r.name !== 'string' || !r.name || r.name.length > 1024
         || !Number.isSafeInteger(r.bytes) || r.bytes < 0 || !Number.isSafeInteger(r.modifiedMs) || Math.abs(r.modifiedMs) > 8640000000000000
         || (r.hash !== undefined && (typeof r.hash !== 'string' || !/^[a-f0-9]{64}$/i.test(r.hash)))
+        || (r.kind !== undefined && r.kind !== 'file' && r.kind !== 'directory')
         || seen.has(r.path) || rows.length >= 1000) { limited = true; continue }
       rows.push(r); seen.add(r.path)
     } catch { limited = true }

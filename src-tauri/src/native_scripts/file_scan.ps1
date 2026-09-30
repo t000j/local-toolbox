@@ -74,6 +74,7 @@ public class BoundedFileScan {
  bool Row(Item i,string hash) {
   if(rows>=1000) { Limit("result-limit"); stop=true; return false; }
   Dictionary<string,object> row=new Dictionary<string,object>{{"path",i.path},{"name",i.name},{"bytes",Size(i.info)},{"modifiedMs",Modified(i.info)}};
+  if(q.mode=="tree") row.Add("kind",(i.info.attrs&16)!=0?"directory":"file");
   if(hash!=null) row.Add("hash",hash); string line=json.Serialize(row); int bytes=Encoding.UTF8.GetByteCount(line)+2;
   if(outputBytes+bytes>55*1024) { Limit("output-budget"); stop=true; return false; }
   Console.WriteLine(line); Console.Out.Flush(); outputBytes+=bytes; rows++; return true;
@@ -87,13 +88,13 @@ public class BoundedFileScan {
   bool dir=(attrs&16)!=0;
   if(dir) {
    if(parent.depth>=32||dirs.Count>=1000) { Limit(parent.depth>=32?"depth-limit":"directory-limit"); Skip("directory-limit",path); return; }
-   try { Handle h=Open(parent.h,name,true,false); held.Add(h); dirs.Add(new Dir{h=h,path=path,depth=parent.depth+1}); }
+   try { Handle h=Open(parent.h,name,true,false); held.Add(h); dirs.Add(new Dir{h=h,path=path,depth=parent.depth+1}); if(q.mode=="tree") Row(new Item{name=name,path=path,info=Check(h,true)},null); }
    catch(IOException e) { Fail(e,path); } return;
   }
   try { using(Handle h=Open(parent.h,name,false,false)) {
    Info i=Check(h,false); if(!Match(name,i)) return;
    Item item=new Item{parent=parent,name=name,path=path,info=i,change=Change(h)};
-   if(q.mode=="search") { Row(item,null); return; }
+   if(q.mode!="duplicates") { Row(item,null); return; }
    if(Size(i)>64L*1024*1024) { Skip("file-hash-size-limit",path); Limit("file-hash-size-limit"); return; }
    string id=i.volume+":"+i.idHi+":"+i.idLo;
    if(i.idHi==0 && i.idLo==0) { Skip("identity-unavailable",path); return; }

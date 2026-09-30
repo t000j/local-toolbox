@@ -102,8 +102,11 @@ const FileSearchTool = defineAsyncComponent(() => import('./components/FileSearc
 
 const DuplicateFilesTool = defineAsyncComponent(() => import('./components/DuplicateFilesTool.vue'))
 
+const FolderCompareTool = defineAsyncComponent(() => import('./components/FolderCompareTool.vue'))
+
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  { id: 'folder-compare', name: '文件夹结构比较', description: '只读比较两个所选目录的相对名称、类型、大小和时间。', category: 'files', keywords: ['folder', '比较', '目录', '差异'], icon: FolderOpen, tone: 'blue', component: FolderCompareTool },
   { id: 'duplicate-files', name: '重复文件查找', description: '仅在所选文件夹内按大小与完整 SHA-256 查找重复候选。', category: 'files', keywords: ['duplicates', '重复文件', 'sha256', '哈希'], icon: Hash, tone: 'violet', component: DuplicateFilesTool },
   { id: 'file-search', name: '本地文件搜索', description: '仅在所选文件夹内按名称、扩展名、大小与修改时间搜索。', category: 'files', keywords: ['search', '文件搜索', '文件名', '扩展名'], icon: Search, tone: 'blue', component: FileSearchTool },
   { id: 'monitor-info', name: '显示器信息查看', description: '只读查看分辨率、缩放和显示器排列。', category: 'system-network', keywords: ['monitor', '显示器', '屏幕', '缩放', '分辨率'], icon: Monitor, tone: 'blue', component: MonitorInfoTool },

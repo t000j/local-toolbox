@@ -47,6 +47,12 @@ try {
     Assert-Scan ($null -eq $r.rows[0].hash -and $r.rows[0].bytes -eq 4) 'search returns metadata only'
     Assert-Scan ($r.summary.skipped -ge 1) 'junction is skipped'
 
+    $q = New-Query 'tree'
+    $r = Read-Scan $q
+    Assert-Scan (@($r.rows | Where-Object { $_.name -eq 'nested' -and $_.kind -eq 'directory' }).Count -eq 1) 'tree includes directories'
+    Assert-Scan (@($r.rows | Where-Object { $_.kind -eq 'file' }).Count -eq 6) 'tree includes files'
+    Assert-Scan (@($r.rows | Where-Object { $_.path -like '*leak*' }).Count -eq 0) 'tree cannot follow junctions'
+
     $q = New-Query 'duplicates'; $q.extension='txt'
     $r = Read-Scan $q
     Assert-Scan ($r.rows.Count -eq 3) 'size group hashes each ordinary matching file'

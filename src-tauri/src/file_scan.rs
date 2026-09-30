@@ -11,7 +11,7 @@ const MAX_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
 
 #[derive(Clone, Copy, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
-pub enum FileScanMode { Search, Duplicates }
+pub enum FileScanMode { Search, Duplicates, Tree }
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
