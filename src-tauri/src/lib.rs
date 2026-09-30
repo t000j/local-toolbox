@@ -4,6 +4,7 @@ mod image_conversion;
 mod network;
 mod network_probe;
 mod lan_discovery;
+mod http_request;
 mod local_reports;
 mod native_windows;
 mod screenshot;
@@ -37,6 +38,7 @@ pub fn run() {
             image_conversion::preview_image_compression,
             image_conversion::compress_image_file,
             lan_discovery::run_lan_discovery,
+            http_request::run_http_request,
             network_probe::prepare_network_probe,
             network_probe::run_dns_query,
             network_probe::run_dns_cache,
