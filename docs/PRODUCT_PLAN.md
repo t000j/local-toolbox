@@ -295,7 +295,7 @@ OCR、PDF 批处理和服务/启动项管理可以放到后续阶段，分别评
 - 系统与设备概览只读展示 Windows 版本、处理器、逻辑/物理核心数、内存和运行时长，不读取序列号。
 - TCP 端口查询按 PID 合并显示，区分监听地址和活动连接；0.0.0.0 会说明为监听所有 IPv4 网卡。
 - 结束占用进程需二次确认，执行前再次核对监听端口和 PID，并保护系统关键进程。
-- 早期原型曾生成 Tauri Windows release 与约 1.89 MiB 的 NSIS 安装包；当前 40 工具版本已于 2026-09-30 完成 Windows x64 签名打包，安装包约 3.80 MiB。
+- 早期原型曾生成 Tauri Windows release 与约 1.89 MiB 的 NSIS 安装包；0.1.0 的 40 工具版本已于 2026-09-30 完成 Windows x64 签名打包，安装包约 3.80 MiB。
 - 本批完成第 89—98 项的代码、工具注册和文档，新增 10 款，总计 40 款；开发时按用户要求仅修改代码和文档，现已通过前端构建与 Rust release 编译，Windows 原生操作和权限边界尚待后续实际验证。
 - 已加入 NSIS 当前用户安装、Tauri 更新模块、版本显示/自动检查偏好、下载验签和确认安装；更新安装前会等待已发起的本机工具命令完成，安装期间拒绝发起新命令。代码与依赖已接入，未运行安装或升级验证。
 - 第 99 项已完成，当前共 41 款工具；第 100 项设置备份与恢复尚未实现。设备清单、端口操作、窗口控制、临时清理等 Windows 能力及不同设备上的字段表现仍需实际操作验证。
@@ -309,15 +309,15 @@ OCR、PDF 批处理和服务/启动项管理可以放到后续阶段，分别评
 - 正式安装后的应用启动 3.5 秒后异步检查更新；可在“关于与更新”关闭或手动检查。开发模式不执行检查，网络失败不阻塞工具使用。
 - 更新先下载并验签，再由用户确认安装。Windows 安装会退出应用，待原生工具任务结束后才允许执行；安装后由安装程序重新启动应用。
 - GitHub Actions 在版本标签或手动触发时构建 Windows x64 NSIS 包、签名与 `latest.json`，先生成 Release 草稿；首版验证完成后再正式发布。
-- 2026-09-30 已配置仓库级 `TAURI_SIGNING_PRIVATE_KEY` 与 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 两项 Actions 加密 Secrets，并核对名称与配置时间；私钥与密码未提交到源码仓库，本机已生成签名安装包，首次 Actions 构建仍待执行。
+- 2026-09-30 已配置仓库级 `TAURI_SIGNING_PRIVATE_KEY` 与 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 两项 Actions 加密 Secrets，并核对名称与配置时间；私钥与密码未提交到源码仓库，0.1.1 的 GitHub Actions 签名构建已通过。
 - 版本同步与发布维护说明见 `toolbox-app/docs/RELEASING.md`；根目录规划为源文档，通过 `npm run docs:sync` 同步到仓库中的 `docs/PRODUCT_PLAN.md`。
-- 已完成 Git、发布更新代码和 Actions 签名配置的接入，依赖已安装，本机完整打包已通过；尚未安装、运行界面、完成升级验证、触发 Actions 或发布正式版本。
+- 已完成 Git、发布更新代码和 Actions 签名配置的接入，本机完整打包与 GitHub Actions 构建均通过，0.1.1 已正式发布。0.1.0 已由用户安装；客户端实际升级与新工具查询结果仍待用户验证。
 - 本机发布脚本改为带 BOM 的 UTF-8，并通过 `.editorconfig` 指定 `.ps1` 的编码与 CRLF 换行，修复 Windows PowerShell 5.1 下中文导致的解析失败，已通过 Windows PowerShell 5.1 和 PowerShell 7 解析检查。
 - 修复剪贴板历史数据库 Promise 的类型推断，以及特殊字符、剪贴板历史、多项粘贴队列页面的未使用图标导入。`npm run build` 与 `npm run release:build` 均通过，生成 Windows x64 安装包与对应更新签名文件，安装包约 3.80 MiB。
 - 产品名、窗口、快捷方式和界面品牌统一为 LocalToolbox，npm 与 Rust 包名统一为 local-toolbox，主程序为 LocalToolbox.exe，安装包为 LocalToolbox_0.1.0_x64-setup.exe。采用当前 Tauri CLI 2.12.0 官方 NSIS 模板的最小定制版本，新安装默认目录为 `%LOCALAPPDATA%\Programs\LocalToolbox`；应用标识与更新公钥保持稳定。
-- 首版尚未公开发布；本机已安装中文名称原型时，应卸载旧版并保留应用数据，再安装英文名称版本。名称调整不自动迁移旧安装目录；后续正式版本保持产品名和应用标识稳定。
+- 最初中文名称原型仅供本机试用，仍安装该原型时应卸载旧版并保留应用数据，再安装英文名称版本。已安装英文版 LocalToolbox 0.1.0 可使用应用内更新；后续正式版本保持产品名和应用标识稳定。
 - 英文命名版本已完成 `npm run release:build`，前端构建、Rust release 编译、定制 NSIS 安装包与更新签名生成均通过；已核对生成脚本中的产品名、主程序名和 Programs 下的默认安装目录，以及应用标识和更新公钥未变化，尚未实际安装或升级。
-- 0.1.1 已同步前端、Tauri 和 Rust 版本并完成本机完整打包，新工具脚本通过 Windows PowerShell 5.1 解析；安装包约 3.80 MiB，GitHub 发布说明与客户端更新说明使用 `docs/release-notes/0.1.1.md`。本次准备发布到 GitHub Releases，供已安装 0.1.0 的用户测试更新。
+- 0.1.1 已同步前端、Tauri 和 Rust 版本并完成本机完整打包，新工具脚本通过 Windows PowerShell 5.1 解析；GitHub Actions 运行 36673583170 成功，正式发布地址为 https://github.com/t000j/local-toolbox/releases/tag/v0.1.1，发布资产含约 3.80 MiB 安装包、对应签名与 latest.json。GitHub 发布说明和客户端说明使用 `docs/release-notes/0.1.1.md`；未登录请求已核对公开清单返回 0.1.1、签名字段与 .sig 一致、安装包可下载且产品名/版本正确，实际客户端升级由用户测试。
 
 ## 7. 后续代码目录建议
 
