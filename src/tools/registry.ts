@@ -5,6 +5,7 @@ import JsonFormatterTool from './components/JsonFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
+const PdfMergeTool = defineAsyncComponent(() => import('./components/PdfMergeTool.vue'))
 const FaviconTool = defineAsyncComponent(() => import('./components/FaviconTool.vue'))
 const ImagePaletteTool = defineAsyncComponent(() => import('./components/ImagePaletteTool.vue'))
 const ColorFormatTool = defineAsyncComponent(() => import('./components/ColorFormatTool.vue'))
@@ -592,6 +593,7 @@ export const tools: ToolDefinition[] = [
     tone: 'blue',
     component: BatchRenameTool,
   },
+  { id: 'pdf-merge', name: 'PDF 合并', description: '按清单顺序合并受支持的静态 PDF 页面，校验后安全另存；当前部分实现。', category: 'files', keywords: ['PDF', '合并', '页面', 'merge'], icon: ImageIcon, tone: 'blue', component: PdfMergeTool },
   { id: 'favicon', name: 'Favicon 生成器', description: '本地图片生成常见 PNG 尺寸或多图层 ICO，预览后另存。', category: 'files', keywords: ['favicon', '网站图标', 'ICO', 'PNG'], icon: ImageIcon, tone: 'blue', component: FaviconTool },
   { id: 'image-palette', name: '图片调色板提取', description: '本机取样并提取代表色，按透明度加权显示占比及复制 HEX。', category: 'files', keywords: ['调色板', '主色', '图片颜色', 'palette'], icon: ImageIcon, tone: 'blue', component: ImagePaletteTool },
   { id: 'color-format', name: '颜色格式转换', description: '互转 HEX、RGB 和 HSL，保留透明度并显示量化与范围说明。', category: 'files', keywords: ['颜色', 'HEX', 'RGB', 'HSL', '透明度', 'color'], icon: ImageIcon, tone: 'blue', component: ColorFormatTool },
