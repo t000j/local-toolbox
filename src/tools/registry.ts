@@ -7,6 +7,7 @@ import JsonDiffTool from './components/JsonDiffTool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
 const ZipArchiveTool = defineAsyncComponent(() => import('./components/ZipArchiveTool.vue'))
 const ChecksumTool = defineAsyncComponent(() => import('./components/ChecksumTool.vue'))
+const TextEncodingTool = defineAsyncComponent(() => import('./components/TextEncodingTool.vue'))
 const HashTool = defineAsyncComponent(() => import('./components/HashTool.vue'))
 import TimestampTool from './components/TimestampTool.vue'
 import UnitConverterTool from './components/UnitConverterTool.vue'
@@ -112,6 +113,7 @@ const FilePartsTool = defineAsyncComponent(() => import('./components/FilePartsT
 
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  { id: 'text-encoding', name: '文本文件编码转换', description: '严格转换 UTF-8、UTF-16 等编码，预览后无损另存。', category: 'files', keywords: ['encoding', '编码', 'utf-8', 'utf-16', 'bom'], icon: Binary, tone: 'violet', component: TextEncodingTool },
   { id: 'checksum-verify', name: '文件校验和验证', description: '根据可信来源的校验值，分块验证本地文件内容。', category: 'hash', keywords: ['checksum', '校验和', '完整性', '验证'], icon: Hash, tone: 'green', component: ChecksumTool },
   { id: 'zip-archive', name: 'ZIP 压缩包管理', description: '创建压缩包、浏览目录并逐项安全解压另存。', category: 'files', keywords: ['zip', '压缩', '解压'], icon: FolderOpen, tone: 'blue', component: ZipArchiveTool },
   { id: 'file-parts', name: '文件分割与合并', description: '按大小流式分割二进制文件，凭有序清单与 SHA-256 合并。', category: 'files', keywords: ['split', 'merge', '分割', '合并', '二进制'], icon: FolderOpen, tone: 'blue', component: FilePartsTool },
