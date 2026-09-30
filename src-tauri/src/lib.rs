@@ -78,6 +78,7 @@ pub fn run() {
             network::terminate_port_process,
             native_windows::list_desktop_windows,
             native_windows::control_desktop_window,
+            native_windows::move_desktop_window,
             native_windows::list_installed_apps,
             native_windows::query_event_logs,
             native_windows::get_battery_power,

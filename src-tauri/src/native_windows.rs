@@ -73,6 +73,33 @@ pub async fn control_desktop_window(handle: u64, process_id: u32, title: String,
     }).await.map_err(|error| error.to_string())?
 }
 
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct WindowRect { left: i32, top: i32, right: i32, bottom: i32 }
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct WindowMove {
+    handle: u64, process_id: u32, title: String, expected: WindowRect, x: i32, y: i32, confirmed: bool,
+}
+#[tauri::command]
+pub async fn move_desktop_window(request: WindowMove) -> Result<Value, String> {
+    let r = &request.expected;
+    if !request.confirmed || request.handle == 0 || request.handle > i64::MAX as u64
+        || request.process_id == 0 || request.process_id == std::process::id() || request.title.len() > 4096
+        || [r.left, r.top, r.right, r.bottom, request.x, request.y].iter().any(|v| !(-100000..=100000).contains(v))
+        || r.right <= r.left || r.bottom <= r.top {
+        return Err("窗口移动参数无效，请重新读取并确认。".into());
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        let script = format!("{}\n{}", include_str!("native_scripts/window_api.ps1"),
+            include_str!("native_scripts/window_move.ps1"));
+        run_powershell(&script, &[("TOOLBOX_HANDLE", request.handle.to_string()),
+            ("TOOLBOX_OWNER", request.process_id.to_string()), ("TOOLBOX_TITLE", request.title),
+            ("TOOLBOX_RECT", serde_json::to_string(&request.expected).map_err(|e| e.to_string())?),
+            ("TOOLBOX_X", request.x.to_string()), ("TOOLBOX_Y", request.y.to_string())])
+    }).await.map_err(|_| "窗口移动任务异常，请重新读取位置，勿自动重试。".to_owned())?
+}
+
 async fn query(script: &'static str, variables: Vec<(&'static str, String)>) -> Result<Value, String> {
     tauri::async_runtime::spawn_blocking(move || run_powershell(script, &variables)).await.map_err(|error| error.to_string())?
 }
