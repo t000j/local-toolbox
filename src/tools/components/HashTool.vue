@@ -1,91 +1,72 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Check, Copy, Hash, LoaderCircle, ShieldAlert } from '@lucide/vue'
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
+import { Copy, Hash } from '@lucide/vue'
 import { copyText } from '../clipboard'
-import { md5, sha1 } from 'hash-wasm'
+import { MAX_HASH_FILE, MAX_HASH_TEXT, type HashAlgorithm, type HashRequest } from '../hash'
+import { useWorkerTask } from '../useWorkerTask'
 
-type HashAlgorithm = 'MD5' | 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512'
-
-const input = ref('')
-const algorithm = ref<HashAlgorithm>('SHA-256')
-const output = ref('')
-const error = ref('')
-const copied = ref(false)
-const loading = ref(false)
+const input = ref(''), algorithm = ref<HashAlgorithm>('SHA-256'), fileMode = ref(false), copied = ref(false)
+const file = shallowRef<File | null>(null)
+const { result, error, busy, reset, cancel, run } = useWorkerTask<HashRequest, string>(
+  () => new Worker(new URL('../hash.worker.ts', import.meta.url), { type: 'module' }), 30_000,
+)
 const isWeakAlgorithm = computed(() => algorithm.value === 'MD5' || algorithm.value === 'SHA-1')
-
-async function calculate(): Promise<void> {
-  error.value = ''
-  output.value = ''
-  copied.value = false
-  loading.value = true
-  try {
-    if (algorithm.value === 'MD5') {
-      output.value = await md5(input.value)
-    } else if (algorithm.value === 'SHA-1') {
-      output.value = await sha1(input.value)
-    } else {
-      const data = new TextEncoder().encode(input.value)
-      const digest = await crypto.subtle.digest(algorithm.value, data)
-      output.value = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
-    }
-  } catch {
-    error.value = '当前环境无法执行摘要计算。'
-  } finally {
-    loading.value = false
-  }
+let revision = 0
+function invalidate(): void { revision++; reset(); copied.value = false }
+watch([input, algorithm, fileMode, file], invalidate, { flush: 'sync' })
+function selectFile(event: Event): void {
+  const element = event.target as HTMLInputElement
+  file.value = element.files?.[0] ?? null
+  element.value = ''
+  if (file.value && file.value.size > MAX_HASH_FILE) { file.value = null; error.value = '文件最多 256 MiB。' }
 }
-
-async function copyOutput(): Promise<void> {
-  if (!output.value) return
-  try {
-    await copyText(output.value)
-    copied.value = true
-    window.setTimeout(() => { copied.value = false }, 1600)
-  } catch {
-    error.value = '复制失败，请检查剪贴板权限。'
-  }
+function calculate(): void {
+  invalidate()
+  if (fileMode.value && !file.value) { error.value = '请先选择本地文件。'; return }
+  if (!fileMode.value && input.value.length > MAX_HASH_TEXT) { error.value = '文本最多 1 MiB UTF-16 码元。'; return }
+  run({ algorithm: algorithm.value, value: fileMode.value ? file.value! : input.value })
 }
+async function copy(): Promise<void> {
+  if (!result.value) return
+  const version = revision
+  try { await copyText(result.value); if (version === revision) copied.value = true }
+  catch { if (version === revision) error.value = '复制失败，请检查剪贴板权限。' }
+}
+function stop(): void { invalidate(); cancel() }
+onBeforeUnmount(() => { revision++ })
 </script>
 
 <template>
   <div class="single-column-tool">
     <div class="field-heading">
-      <label for="hash-input">输入文本</label>
-      <div class="algorithm-select">
-        <span>算法</span>
-        <select v-model="algorithm" @change="output = ''; error = ''">
-          <option value="MD5">MD5</option>
-          <option value="SHA-1">SHA-1</option>
-          <option value="SHA-256">SHA-256</option>
-          <option value="SHA-384">SHA-384</option>
-          <option value="SHA-512">SHA-512</option>
+      <label><input v-model="fileMode" type="checkbox" /> 本地文件模式</label>
+      <label class="algorithm-select">算法
+        <select v-model="algorithm">
+          <option v-for="name in ['MD5', 'SHA-1', 'SHA-256', 'SHA-384', 'SHA-512']" :key="name">{{ name }}</option>
         </select>
-      </div>
+      </label>
     </div>
-    <textarea id="hash-input" v-model="input" class="code-input hash-input" placeholder="输入要计算摘要的文本…" @input="output = ''; error = ''"></textarea>
+    <div v-if="fileMode">
+      <label for="hash-file">选择文件（最多 256 MiB，可为空文件）</label>
+      <input id="hash-file" type="file" @change="selectFile" />
+      <p v-if="file" class="form-hint">{{ file.name }} · {{ file.size.toLocaleString() }} 字节</p>
+    </div>
+    <template v-else>
+      <label for="hash-input">输入文本（UTF-8 摘要，最多 1 MiB UTF-16 码元）</label>
+      <textarea id="hash-input" v-model="input" class="code-input hash-input" spellcheck="false"></textarea>
+    </template>
     <div class="field-heading result-heading">
-      <label>摘要结果</label>
-      <button class="quiet-button" :disabled="!output" @click="copyOutput">
-        <Check v-if="copied" :size="14" /><Copy v-else :size="14" /> {{ copied ? '已复制' : '复制' }}
-      </button>
+      <span>摘要结果</span>
+      <button class="quiet-button" :disabled="!result" @click="copy"><Copy :size="14" /> {{ copied ? '已复制' : '复制' }}</button>
     </div>
-    <div class="hash-result" :class="{ empty: !output }">
-      <Hash v-if="!output" :size="16" />
-      <code v-else>{{ output }}</code>
-    </div>
+    <div class="hash-result" :class="{ empty: !result }"><code>{{ result || '等待计算…' }}</code></div>
+    <p v-if="isWeakAlgorithm" class="form-hint hint-error">MD5 / SHA-1 不适合密码存储或防篡改等安全用途。</p>
     <div class="tool-action-row">
-      <p class="form-hint" :class="{ 'hint-error': error }">
-        <span v-if="error">{{ error }}</span>
-        <span v-else-if="isWeakAlgorithm" class="algorithm-warning"><ShieldAlert :size="14" /> MD5 / SHA-1 已不适合安全用途，不要用于密码存储或防篡改校验。</span>
-        <span v-else-if="output"><Check :size="14" /> 哈希是单向摘要，无法从结果还原原文；计算在本机完成。</span>
-        <span v-else>哈希会为输入生成摘要，无法解密还原；MD5 / SHA-1 不适合安全用途。</span>
+      <p class="form-hint" :class="{ 'hint-error': error }" aria-live="polite">
+        {{ error || (busy ? '正在本机分块计算…' : '哈希是单向摘要；不上传文件，后台计算，30 秒超时保护。') }}
       </p>
-      <button class="primary-button" :disabled="loading" @click="calculate">
-        <LoaderCircle v-if="loading" class="spin-icon" :size="15" />
-        <Hash v-else :size="15" />
-        {{ loading ? '计算中…' : '计算摘要' }}
-      </button>
+      <button v-if="busy" class="secondary-button" @click="stop">取消</button>
+      <button v-else class="primary-button" @click="calculate"><Hash :size="15" /> 计算摘要</button>
     </div>
   </div>
 </template>

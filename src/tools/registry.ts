@@ -1,11 +1,31 @@
 import { ArrowLeftRight, Barcode, Binary, Braces, Calculator as CalculatorIcon, CalendarDays, Camera, Clipboard, ClipboardCopy, ClipboardPaste, ClipboardPlus, Clock, FolderOpen, Globe, Hash, Image as ImageIcon, ListFilter, Minimize2, Monitor, Pencil, Percent, QrCode, Ruler, Search, Server, Sparkles, Timer as TimerIcon, Wifi } from '@lucide/vue'
+import { defineAsyncComponent } from 'vue'
 import type { ToolDefinition } from './types'
 import JsonFormatterTool from './components/JsonFormatterTool.vue'
 import JsonPathTool from './components/JsonPathTool.vue'
 import JsonDiffTool from './components/JsonDiffTool.vue'
-import Base64Tool from './components/Base64Tool.vue'
 import UuidGeneratorTool from './components/UuidGeneratorTool.vue'
-import HashTool from './components/HashTool.vue'
+const PdfMetadataTool = defineAsyncComponent(() => import('./components/PdfMetadataTool.vue'))
+const PdfTextTool = defineAsyncComponent(() => import('./components/PdfTextTool.vue'))
+const ImagePdfTool = defineAsyncComponent(() => import('./components/ImagePdfTool.vue'))
+const PdfImagesTool = defineAsyncComponent(() => import('./components/PdfImagesTool.vue'))
+const PdfCompressionTool = defineAsyncComponent(() => import('./components/PdfCompressionTool.vue'))
+const PdfRotateTool = defineAsyncComponent(() => import('./components/PdfRotateTool.vue'))
+const PdfOrderTool = defineAsyncComponent(() => import('./components/PdfOrderTool.vue'))
+const PdfSplitTool = defineAsyncComponent(() => import('./components/PdfSplitTool.vue'))
+const PdfMergeTool = defineAsyncComponent(() => import('./components/PdfMergeTool.vue'))
+const FaviconTool = defineAsyncComponent(() => import('./components/FaviconTool.vue'))
+const ImagePaletteTool = defineAsyncComponent(() => import('./components/ImagePaletteTool.vue'))
+const ColorFormatTool = defineAsyncComponent(() => import('./components/ColorFormatTool.vue'))
+const ScreenColorPickerTool = defineAsyncComponent(() => import('./components/ScreenColorPickerTool.vue'))
+const ImageMetadataStripTool = defineAsyncComponent(() => import('./components/ImageMetadataStripTool.vue'))
+const ImageMetadataTool = defineAsyncComponent(() => import('./components/ImageMetadataTool.vue'))
+const ImageCropTool = defineAsyncComponent(() => import('./components/ImageCropTool.vue'))
+const ImageResizeTool = defineAsyncComponent(() => import('./components/ImageResizeTool.vue'))
+const ZipArchiveTool = defineAsyncComponent(() => import('./components/ZipArchiveTool.vue'))
+const ChecksumTool = defineAsyncComponent(() => import('./components/ChecksumTool.vue'))
+const TextEncodingTool = defineAsyncComponent(() => import('./components/TextEncodingTool.vue'))
+const HashTool = defineAsyncComponent(() => import('./components/HashTool.vue'))
 import TimestampTool from './components/TimestampTool.vue'
 import UnitConverterTool from './components/UnitConverterTool.vue'
 import QrCodeTool from './components/QrCodeTool.vue'
@@ -54,8 +74,133 @@ import FilePermissionsTool from './components/FilePermissionsTool.vue'
 
 import CertificateViewerTool from './components/CertificateViewerTool.vue'
 
+const TracerouteTool = defineAsyncComponent(() => import('./components/TracerouteTool.vue'))
+const PingTool = defineAsyncComponent(() => import('./components/PingTool.vue'))
+const SyntheticDataTool = defineAsyncComponent(() => import('./components/SyntheticDataTool.vue'))
+const RandomGeneratorTool = defineAsyncComponent(() => import('./components/RandomGeneratorTool.vue'))
+const PasswordGeneratorTool = defineAsyncComponent(() => import('./components/PasswordGeneratorTool.vue'))
+const JwtViewerTool = defineAsyncComponent(() => import('./components/JwtViewerTool.vue'))
+const UnicodeTool = defineAsyncComponent(() => import('./components/UnicodeTool.vue'))
+const HtmlEntitiesTool = defineAsyncComponent(() => import('./components/HtmlEntitiesTool.vue'))
+const UrlCodecTool = defineAsyncComponent(() => import('./components/UrlCodecTool.vue'))
+const Base64Tool = defineAsyncComponent(() => import('./components/Base64Tool.vue'))
+const TextDiffTool = defineAsyncComponent(() => import('./components/TextDiffTool.vue'))
+const RegexTesterTool = defineAsyncComponent(() => import('./components/RegexTesterTool.vue'))
+const MarkdownPreviewTool = defineAsyncComponent(() => import('./components/MarkdownPreviewTool.vue'))
+const SqlFormatterTool = defineAsyncComponent(() => import('./components/SqlFormatterTool.vue'))
+const CsvViewerTool = defineAsyncComponent(() => import('./components/CsvViewerTool.vue'))
+const XmlFormatterTool = defineAsyncComponent(() => import('./components/XmlFormatterTool.vue'))
+const YamlFormatterTool = defineAsyncComponent(() => import('./components/YamlFormatterTool.vue'))
+
+const DnsQueryTool = defineAsyncComponent(() => import('./components/DnsQueryTool.vue'))
+
+const DnsCacheTool = defineAsyncComponent(() => import('./components/DnsCacheTool.vue'))
+
+const TcpConnectionsTool = defineAsyncComponent(() => import('./components/TcpConnectionsTool.vue'))
+
+const LanDiscoveryTool = defineAsyncComponent(() => import('./components/LanDiscoveryTool.vue'))
+
+const HttpRequestTool = defineAsyncComponent(() => import('./components/HttpRequestTool.vue'))
+
+const ProcessViewerTool = defineAsyncComponent(() => import('./components/ProcessViewerTool.vue'))
+
+const ServiceManagerTool = defineAsyncComponent(() => import('./components/ServiceManagerTool.vue'))
+
+const StartupManagerTool = defineAsyncComponent(() => import('./components/StartupManagerTool.vue'))
+
+const EnvironmentManagerTool = defineAsyncComponent(() => import('./components/EnvironmentManagerTool.vue'))
+
+const HostsEditorTool = defineAsyncComponent(() => import('./components/HostsEditorTool.vue'))
+
+const FirewallViewerTool = defineAsyncComponent(() => import('./components/FirewallViewerTool.vue'))
+
+const PowerActionsTool = defineAsyncComponent(() => import('./components/PowerActionsTool.vue'))
+
+const MonitorInfoTool = defineAsyncComponent(() => import('./components/MonitorInfoTool.vue'))
+
+const FileSearchTool = defineAsyncComponent(() => import('./components/FileSearchTool.vue'))
+
+const DuplicateFilesTool = defineAsyncComponent(() => import('./components/DuplicateFilesTool.vue'))
+
+const FolderCompareTool = defineAsyncComponent(() => import('./components/FolderCompareTool.vue'))
+
+const FileListTool = defineAsyncComponent(() => import('./components/FileListTool.vue'))
+
+const FilePartsTool = defineAsyncComponent(() => import('./components/FilePartsTool.vue'))
+
 // Built-in tools ship with the app; there is no runtime plugin registration.
 export const tools: ToolDefinition[] = [
+  { id: 'text-encoding', name: '文本文件编码转换', description: '严格转换 UTF-8、UTF-16 等编码，预览后无损另存。', category: 'files', keywords: ['encoding', '编码', 'utf-8', 'utf-16', 'bom'], icon: Binary, tone: 'violet', component: TextEncodingTool },
+  { id: 'checksum-verify', name: '文件校验和验证', description: '根据可信来源的校验值，分块验证本地文件内容。', category: 'hash', keywords: ['checksum', '校验和', '完整性', '验证'], icon: Hash, tone: 'green', component: ChecksumTool },
+  { id: 'zip-archive', name: 'ZIP 压缩包管理', description: '创建压缩包、浏览目录并逐项安全解压另存。', category: 'files', keywords: ['zip', '压缩', '解压'], icon: FolderOpen, tone: 'blue', component: ZipArchiveTool },
+  { id: 'file-parts', name: '文件分割与合并', description: '按大小流式分割二进制文件，凭有序清单与 SHA-256 合并。', category: 'files', keywords: ['split', 'merge', '分割', '合并', '二进制'], icon: FolderOpen, tone: 'blue', component: FilePartsTool },
+  { id: 'file-list', name: '文件清单导出', description: '预览所选目录结构，导出安全转义的 CSV 或文本清单。', category: 'files', keywords: ['csv', '清单', '目录', '导出'], icon: FolderOpen, tone: 'blue', component: FileListTool },
+  { id: 'folder-compare', name: '文件夹结构比较', description: '只读比较两个所选目录的相对名称、类型、大小和时间。', category: 'files', keywords: ['folder', '比较', '目录', '差异'], icon: FolderOpen, tone: 'blue', component: FolderCompareTool },
+  { id: 'duplicate-files', name: '重复文件查找', description: '仅在所选文件夹内按大小与完整 SHA-256 查找重复候选。', category: 'files', keywords: ['duplicates', '重复文件', 'sha256', '哈希'], icon: Hash, tone: 'violet', component: DuplicateFilesTool },
+  { id: 'file-search', name: '本地文件搜索', description: '仅在所选文件夹内按名称、扩展名、大小与修改时间搜索。', category: 'files', keywords: ['search', '文件搜索', '文件名', '扩展名'], icon: Search, tone: 'blue', component: FileSearchTool },
+  { id: 'monitor-info', name: '显示器信息查看', description: '只读查看分辨率、缩放和显示器排列。', category: 'system-network', keywords: ['monitor', '显示器', '屏幕', '缩放', '分辨率'], icon: Monitor, tone: 'blue', component: MonitorInfoTool },
+  { id: 'power-actions', name: '电源操作面板', description: '查看影响并确认后锁屏、睡眠、注销、重启或关机。', category: 'system-network', keywords: ['power', '锁屏', '睡眠', '重启', '关机', '注销'], icon: Monitor, tone: 'amber', component: PowerActionsTool },
+  { id: 'firewall-viewer', name: '防火墙规则查看', description: '只读搜索 Windows 防火墙规则与筛选条件。', category: 'system-network', keywords: ['firewall', '防火墙', '规则', '端口'], icon: Monitor, tone: 'blue', component: FirewallViewerTool },
+  { id: 'hosts-editor', name: 'Hosts 文件查看与编辑', description: '预览差异，确认后备份并保存 Hosts；检测外部冲突。', category: 'system-network', keywords: ['hosts', '域名映射', '备份'], icon: Monitor, tone: 'blue', component: HostsEditorTool },
+  { id: 'environment-manager', name: '环境变量查看与编辑', description: '查看用户和系统变量，预览确认后编辑普通用户变量。', category: 'system-network', keywords: ['environment', '环境变量', '用户变量'], icon: Monitor, tone: 'blue', component: EnvironmentManagerTool },
+  { id: 'startup-manager', name: '开机启动项管理', description: '管理当前用户 Run 子集，确认后备份禁用与恢复。', category: 'system-network', keywords: ['startup', '启动项', 'Run'], icon: Monitor, tone: 'blue', component: StartupManagerTool },
+  { id: 'service-manager', name: 'Windows 服务管理器', description: '只读查询服务，逐项确认后安全范围内启动或停止。', category: 'system-network', keywords: ['service', '服务', '启动', '停止'], icon: Monitor, tone: 'blue', component: ServiceManagerTool },
+  { id: 'process-viewer', name: '进程查看器', description: '只读查看进程名称、PID、工作集内存与累计 CPU 时间。', category: 'system-network', keywords: ['process', '进程', 'pid', '内存', 'cpu'], icon: Monitor, tone: 'blue', component: ProcessViewerTool },
+  { id: 'http-request', name: 'HTTP 请求调试器', description: '手动发送指定 HTTP(S) 请求，查看有界纯文本响应。', category: 'system-network', keywords: ['http', 'api', '请求', '响应', '调试'], icon: Globe, tone: 'blue', component: HttpRequestTool },
+  { id: 'lan-discovery', name: '局域网设备发现', description: '手动发现已连接私有子网中响应 ICMP 的设备，最多 62 台。', category: 'system-network', keywords: ['lan', '局域网', '设备', '发现', 'icmp'], icon: Wifi, tone: 'blue', component: LanDiscoveryTool },
+  { id: 'tcp-connections', name: 'TCP 连接查看器', description: '只读查看 IPv4/IPv6 TCP 连接、监听状态与关联 PID。', category: 'system-network', keywords: ['tcp', '连接', 'netstat', 'pid', '监听', '进程'], icon: Globe, tone: 'blue', component: TcpConnectionsTool },
+  { id: 'dns-cache', name: 'DNS 缓存查看与刷新', description: '手动查看本机 DNS 缓存，明确确认后清空缓存。', category: 'system-network', keywords: ['dns', '缓存', '刷新', 'flushdns', 'displaydns'], icon: Globe, tone: 'blue', component: DnsCacheTool },
+  { id: 'dns-query', name: 'DNS 查询', description: '手动查询指定域名的 DNS 记录，保留系统原始输出。', category: 'system-network', keywords: ['dns', '解析', '域名', 'nslookup', 'mx', 'txt'], icon: Globe, tone: 'blue', component: DnsQueryTool },
+  {
+    id: 'traceroute',
+    name: '路由追踪',
+    description: '追踪到指定主机的网络路径，有限跳数与总时限，支持取消。',
+    category: 'system-network',
+    keywords: ['路由', 'traceroute', 'tracert', '网络路径', '跳数'],
+    icon: Globe,
+    tone: 'violet',
+    component: TracerouteTool,
+  },
+  {
+    id: 'ping',
+    name: 'Ping 测试',
+    description: '向你指定的主机发送有限次数的 ICMP 连通性与延迟探测。',
+    category: 'system-network',
+    keywords: ['ping', '网络', '连通性', '延迟', 'icmp'],
+    icon: Wifi,
+    tone: 'blue',
+    component: PingTool,
+  },
+  {
+    id: 'synthetic-data',
+    name: '测试数据生成器',
+    description: '按本地模板生成标明虚构的 JSON、CSV 或 SQLite SQL 样例。',
+    category: 'data',
+    keywords: ['测试数据', '虚构', 'synthetic', 'mock', '样例', 'json', 'csv', 'sql', '姓名', '邮箱'],
+    icon: Sparkles,
+    tone: 'green',
+    component: SyntheticDataTool,
+  },
+  {
+    id: 'random-generator',
+    name: '随机数与字符串',
+    description: '按范围、长度与数量生成随机整数或自定义字符池字符串。',
+    category: 'data',
+    keywords: ['random', '随机数', '随机字符串', '测试数据'],
+    icon: Sparkles,
+    tone: 'blue',
+    component: RandomGeneratorTool,
+  },
+  {
+    id: 'password-generator',
+    name: '密码生成器',
+    description: '按长度与字符类型，在本机生成安全随机密码。',
+    category: 'data',
+    keywords: ['密码', 'password', '随机', '安全'],
+    icon: Sparkles,
+    tone: 'violet',
+    component: PasswordGeneratorTool,
+  },
   {
     id: 'json',
     name: 'JSON 格式化',
@@ -87,14 +232,124 @@ export const tools: ToolDefinition[] = [
     component: JsonPathTool,
   },
   {
+    id: 'xml',
+    name: 'XML 格式化与校验',
+    description: '本地校验 XML 结构并整理缩进，保留混合文本。',
+    category: 'data',
+    keywords: ['xml', '格式化', '结构校验', '缩进'],
+    icon: Braces,
+    tone: 'violet',
+    component: XmlFormatterTool,
+  },
+  {
+    id: 'yaml',
+    name: 'YAML 格式化与校验',
+    description: '校验并格式化 YAML 1.2，安全互转 JSON。',
+    category: 'data',
+    keywords: ['yaml', 'yml', 'json', '格式化', '缩进', '校验', '转换'],
+    icon: Braces,
+    tone: 'blue',
+    component: YamlFormatterTool,
+  },
+  {
+    id: 'csv',
+    name: 'CSV 表格查看器',
+    description: '读取本地 CSV，分页筛选并导出 JSON。',
+    category: 'data',
+    keywords: ['csv', 'tsv', '表格', '分隔符', '筛选', 'json', '导出'],
+    icon: ListFilter,
+    tone: 'green',
+    component: CsvViewerTool,
+  },
+  {
+    id: 'sql',
+    name: 'SQL 格式化器',
+    description: '按 SQL 方言整理缩进与关键字大小写，不执行语句。',
+    category: 'data',
+    keywords: ['sql', 'mysql', 'postgresql', 'sqlite', '格式化', '数据库'],
+    icon: Braces,
+    tone: 'blue',
+    component: SqlFormatterTool,
+  },
+  {
+    id: 'markdown',
+    name: 'Markdown 预览器',
+    description: '本机编辑 Markdown 并安全预览，可复制净化后的 HTML。',
+    category: 'data',
+    keywords: ['markdown', 'md', '预览', '编辑', 'html'],
+    icon: Pencil,
+    tone: 'violet',
+    component: MarkdownPreviewTool,
+  },
+  {
+    id: 'regex',
+    name: '正则表达式测试器',
+    description: '测试 JavaScript 正则匹配，查看位置与捕获组，支持超时取消。',
+    category: 'data',
+    keywords: ['regex', 'regexp', '正则', '表达式', '匹配', '捕获组'],
+    icon: Search,
+    tone: 'green',
+    component: RegexTesterTool,
+  },
+  {
+    id: 'text-diff',
+    name: '文本差异比较',
+    description: '逐行比较两段文本，标出新增和删除，分页查看变化。',
+    category: 'data',
+    keywords: ['text diff', '文本', '差异', '比较', '变化行'],
+    icon: ArrowLeftRight,
+    tone: 'violet',
+    component: TextDiffTool,
+  },
+  {
     id: 'base64',
     name: 'Base64 编解码',
-    description: '在本地完成文本的 Base64 编码与解码。',
+    description: '本地完成文本或文件的 Base64 编解码，支持二进制保存。',
     category: 'data',
-    keywords: ['base64', '编码', '解码', '文本'],
+    keywords: ['base64', '编码', '解码', '文本', '文件', '二进制'],
     icon: Binary,
     tone: 'blue',
     component: Base64Tool,
+  },
+  {
+    id: 'url-codec',
+    name: 'URL 编解码',
+    description: '转换 URL 参数、完整 URI 或表单字段，明确区分加号与空格。',
+    category: 'data',
+    keywords: ['url', 'uri', '编码', '解码', '百分号', '参数', '表单'],
+    icon: Globe,
+    tone: 'blue',
+    component: UrlCodecTool,
+  },
+  {
+    id: 'html-entities',
+    name: 'HTML 实体编解码',
+    description: '转换常见命名实体和 Unicode 数字实体，结果仅作为纯文本显示。',
+    category: 'data',
+    keywords: ['html', '实体', '编码', '解码', '转义', '特殊字符'],
+    icon: Braces,
+    tone: 'blue',
+    component: HtmlEntitiesTool,
+  },
+  {
+    id: 'unicode',
+    name: 'Unicode 查看与转义',
+    description: '按码点查看字符与 UTF-16 码元，转换字面 Unicode 转义。',
+    category: 'data',
+    keywords: ['unicode', '码点', 'utf16', '编码', '解码', '转义', '字符'],
+    icon: Binary,
+    tone: 'violet',
+    component: UnicodeTool,
+  },
+  {
+    id: 'jwt-viewer',
+    name: 'JWT 内容查看器',
+    description: '本机解码 Header 和 Payload；不验证签名，不保存令牌。',
+    category: 'data',
+    keywords: ['jwt', 'token', 'header', 'payload', '令牌', '解码'],
+    icon: Braces,
+    tone: 'amber',
+    component: JwtViewerTool,
   },
   {
     id: 'uuid',
@@ -109,9 +364,9 @@ export const tools: ToolDefinition[] = [
   {
     id: 'hash',
     name: '哈希摘要',
-    description: '计算文本的 MD5、SHA-1 或 SHA-2 摘要，用于数据比对。',
+    description: '计算文本或本地文件的 MD5、SHA-1 或 SHA-2 摘要。',
     category: 'hash',
-    keywords: ['hash', 'md5', 'sha', '摘要', '校验', '单向'],
+    keywords: ['hash', 'md5', 'sha', '摘要', '校验', '单向', '文件'],
     icon: Hash,
     tone: 'amber',
     component: HashTool,
@@ -346,6 +601,23 @@ export const tools: ToolDefinition[] = [
     tone: 'blue',
     component: BatchRenameTool,
   },
+  { id: 'pdf-metadata', name: 'PDF 元数据查看', description: '只读文档属性、页数及原始Metadata文本，安全显示；存在明确支持范围。', category: 'files', keywords: ['PDF', '元数据', '标题', '属性', 'metadata'], icon: ImageIcon, tone: 'blue', component: PdfMetadataTool },
+  { id: 'pdf-text', name: 'PDF 文本提取', description: '提取已有文字并按页导出UTF-8，隔离线程处理；存在明确支持范围，不做OCR。', category: 'files', keywords: ['PDF', '文字', '文本', '提取', 'text'], icon: ImageIcon, tone: 'blue', component: PdfTextTool },
+  { id: 'images-pdf', name: '图片转 PDF', description: '按顺序将PNG/JPEG方向校正、等比排版为PDF，选择纸张/边距/透明度并安全另存。', category: 'files', keywords: ['PDF', '图片', 'PNG', 'JPEG', '合成', 'A4'], icon: ImageIcon, tone: 'blue', component: ImagePdfTool },
+  { id: 'pdf-images', name: 'PDF 转图片', description: '在隔离线程按页/DPI生成 PNG 或 JPEG，逐页安全另存；存在明确支持范围。', category: 'files', keywords: ['PDF', '图片', 'PNG', 'JPEG', 'DPI'], icon: ImageIcon, tone: 'blue', component: PdfImagesTool },
+  { id: 'pdf-compress', name: 'PDF 图片压缩', description: '有损重编码受支持的内嵌图片，保留文字/页面并比较实际体积；存在明确支持范围。', category: 'files', keywords: ['PDF', '压缩', '图片', 'quality', 'compress'], icon: ImageIcon, tone: 'blue', component: PdfCompressionTool },
+  { id: 'pdf-rotate', name: 'PDF 页面旋转', description: '按页或批量追加直角旋转，校验保留页面内容后另存；存在明确支持范围。', category: 'files', keywords: ['PDF', '旋转', '页面', 'rotate'], icon: ImageIcon, tone: 'blue', component: PdfRotateTool },
+  { id: 'pdf-order', name: 'PDF 页面排序', description: '分组内容缩略图、调整静态页面顺序并校验另存；存在明确支持范围。', category: 'files', keywords: ['PDF', '排序', '页面', '缩略图', 'order'], icon: ImageIcon, tone: 'blue', component: PdfOrderTool },
+  { id: 'pdf-split', name: 'PDF 页面拆分', description: '按页码范围抽取静态 PDF 页面并安全另存；存在明确支持范围。', category: 'files', keywords: ['PDF', '拆分', '页面', 'split'], icon: ImageIcon, tone: 'blue', component: PdfSplitTool },
+  { id: 'pdf-merge', name: 'PDF 合并', description: '按清单顺序合并受支持的静态 PDF 页面，校验后安全另存；存在明确支持范围。', category: 'files', keywords: ['PDF', '合并', '页面', 'merge'], icon: ImageIcon, tone: 'blue', component: PdfMergeTool },
+  { id: 'favicon', name: 'Favicon 生成器', description: '本地图片生成常见 PNG 尺寸或多图层 ICO，预览后另存。', category: 'files', keywords: ['favicon', '网站图标', 'ICO', 'PNG'], icon: ImageIcon, tone: 'blue', component: FaviconTool },
+  { id: 'image-palette', name: '图片调色板提取', description: '本机取样并提取代表色，按透明度加权显示占比及复制 HEX。', category: 'files', keywords: ['调色板', '主色', '图片颜色', 'palette'], icon: ImageIcon, tone: 'blue', component: ImagePaletteTool },
+  { id: 'color-format', name: '颜色格式转换', description: '互转 HEX、RGB 和 HSL，保留透明度并显示量化与范围说明。', category: 'files', keywords: ['颜色', 'HEX', 'RGB', 'HSL', '透明度', 'color'], icon: ImageIcon, tone: 'blue', component: ColorFormatTool },
+  { id: 'screen-color-picker', name: '屏幕取色器', description: '手动启动系统取色界面，点选一个屏幕像素并复制 sRGB 色值。', category: 'files', keywords: ['取色', '屏幕', '颜色', 'HEX', 'eyedropper'], icon: ImageIcon, tone: 'blue', component: ScreenColorPickerTool },
+  { id: 'image-metadata-strip', name: '图片元数据清除', description: '移除 PNG/JPEG 常见隐私元数据，保留像素、方向和必要颜色信息，预览后另存。', category: 'files', keywords: ['图片', '元数据清除', '隐私', 'GPS', 'EXIF'], icon: ImageIcon, tone: 'blue', component: ImageMetadataStripTool },
+  { id: 'image-metadata', name: '图片元数据查看', description: '只读查看 PNG/JPEG 尺寸、颜色声明及有限 EXIF/GPS 字段。', category: 'files', keywords: ['元数据', 'EXIF', 'GPS', '色彩空间', 'metadata'], icon: ImageIcon, tone: 'blue', component: ImageMetadataTool },
+  { id: 'image-crop', name: '图片裁切、旋转与翻转', description: '按方向校正后的坐标裁切、顺时针旋转及翻转，预览后另存。', category: 'files', keywords: ['裁切', '旋转', '翻转', 'crop'], icon: ImageIcon, tone: 'blue', component: ImageCropTool },
+  { id: 'image-resize', name: '图片尺寸调整', description: '单张或批量按像素、比例缩放，预览后另存 PNG。', category: 'files', keywords: ['图片', '缩放', '尺寸', 'resize'], icon: ImageIcon, tone: 'blue', component: ImageResizeTool },
   {
     id: 'image-format',
     name: '图片格式转换',

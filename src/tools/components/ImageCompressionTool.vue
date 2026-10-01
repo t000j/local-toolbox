@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { trackedInvoke as invoke } from '../../app/activity'
+import { computed, onBeforeUnmount, ref } from 'vue'
+import { useNativeImageTask } from '../useNativeImageTask'
 import { open, save } from '@tauri-apps/plugin-dialog'
 import { Check, ImagePlus, LoaderCircle, Minimize2, Upload } from '@lucide/vue'
 
 type OutputFormat = 'jpeg' | 'png'
-interface ImageInfo { width: number; height: number; sizeBytes: number; format: string; previewDataUrl: string }
-interface CompressionPreview { width: number; height: number; inputSizeBytes: number; outputSizeBytes: number; reductionPercent: number; format: string; previewDataUrl: string }
+interface ImageInfo { width: number; height: number; sizeBytes: number; format: string; previewDataUrl: string; sourceHash: string }
+interface CompressionPreview { width: number; height: number; inputSizeBytes: number; outputSizeBytes: number; reductionPercent: number; format: string; previewDataUrl: string; sourceHash: string; outputHash: string }
 interface CompressionResult { inputSizeBytes: number; outputSizeBytes: number; reductionPercent: number; format: string }
 
 const inputPath = ref('')
@@ -16,7 +16,7 @@ const outputFormat = ref<OutputFormat>('jpeg')
 const jpegQuality = ref(80)
 const error = ref('')
 const success = ref('')
-const loading = ref(false)
+const task = useNativeImageTask(), loading = task.busy
 const outputName = ref('')
 const sizeDifference = computed(() => {
   if (!preview.value) return ''
@@ -41,81 +41,52 @@ function clearPreview(): void {
   success.value = ''
 }
 
-async function selectImage(): Promise<void> {
-  error.value = ''
-  success.value = ''
+async function selectImage() {
+  const version = task.begin(); if (version === null) return
+  clearPreview()
   try {
-    const selected = await open({
-      title: '选择要压缩的图片',
-      multiple: false,
-      directory: false,
-      filters: [{ name: '图片', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'tif', 'tiff'] }],
-    })
-    if (typeof selected !== 'string') return
-
-    inputPath.value = selected
-    inputInfo.value = null
-    clearPreview()
-    loading.value = true
-    inputInfo.value = await invoke<ImageInfo>('inspect_image_file', { path: selected })
-    outputFormat.value = inputInfo.value.format === 'JPG' ? 'jpeg' : 'png'
-  } catch (cause) {
-    inputPath.value = ''
-    inputInfo.value = null
-    error.value = cause instanceof Error ? cause.message : String(cause)
-  } finally {
-    loading.value = false
-  }
+    const selected = await open({ title: '选择要压缩的图片', multiple: false, directory: false,
+      filters: [{ name: '图片', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'tif', 'tiff'] }] })
+    if (!task.current(version) || typeof selected !== 'string') return
+    inputPath.value = selected; inputInfo.value = null
+    const result = await task.execute<ImageInfo>(version, 'inspect_image_file', { path: selected })
+    if (result && task.current(version)) { inputInfo.value = result; outputFormat.value = result.format === 'JPG' ? 'jpeg' : 'png' }
+  } catch (cause) { if (task.current(version)) { inputPath.value = ''; inputInfo.value = null; error.value = String(cause) } }
+  finally { task.finish(version) }
 }
-
-async function createPreview(): Promise<void> {
+async function createPreview() {
   if (!inputPath.value || !inputInfo.value) return
-  error.value = ''
-  success.value = ''
-  loading.value = true
+  const version = task.begin(); if (version === null) return
+  const args = { path: inputPath.value, outputFormat: outputFormat.value, jpegQuality: jpegQuality.value, expectedHash: inputInfo.value.sourceHash }
+  clearPreview()
   try {
-    preview.value = await invoke<CompressionPreview>('preview_image_compression', {
-      path: inputPath.value,
-      outputFormat: outputFormat.value,
-      jpegQuality: jpegQuality.value,
-    })
-    outputName.value = ''
-  } catch (cause) {
-    preview.value = null
-    error.value = cause instanceof Error ? cause.message : String(cause)
-  } finally {
-    loading.value = false
-  }
+    const result = await task.execute<CompressionPreview>(version, 'preview_image_compression', args)
+    if (result && task.current(version)) preview.value = result
+  } catch (cause) { if (task.current(version)) error.value = String(cause) }
+  finally { task.finish(version) }
 }
-
-async function saveCompressed(): Promise<void> {
-  if (!inputPath.value || !preview.value) return
-  error.value = ''
-  success.value = ''
-  const extension = outputFormat.value === 'jpeg' ? 'jpg' : 'png'
-  const defaultName = `${displayName(inputPath.value).replace(/\.[^.]*$/, '') || 'image'}-compressed.${extension}`
-  loading.value = true
+async function saveCompressed() {
+  if (!inputPath.value || !preview.value?.outputHash) return
+  const version = task.begin(); if (version === null) return
+  const input = inputPath.value, format = outputFormat.value, quality = jpegQuality.value
+  const expectedHash = preview.value.sourceHash, expectedOutputHash = preview.value.outputHash
+  error.value = ''; success.value = ''
+  const extension = format === 'jpeg' ? 'jpg' : 'png'
   try {
-    const outputPath = await save({
-      title: '保存压缩后的图片',
-      defaultPath: defaultName,
-      filters: [{ name: `${extension.toUpperCase()} 图片`, extensions: [extension] }],
-    })
-    if (!outputPath) return
-    const result = await invoke<CompressionResult>('compress_image_file', {
-      inputPath: inputPath.value,
-      outputPath,
-      outputFormat: outputFormat.value,
-      jpegQuality: jpegQuality.value,
-    })
-    outputName.value = displayName(outputPath)
-    success.value = `已保存 ${outputName.value} · ${formatSize(result.outputSizeBytes)}`
-  } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : String(cause)
-  } finally {
-    loading.value = false
-  }
+    const outputPath = await save({ title: '保存压缩后的图片',
+      defaultPath: `${displayName(input).replace(/\.[^.]*$/, '') || 'image'}-compressed.${extension}`,
+      filters: [{ name: `${extension.toUpperCase()} 图片`, extensions: [extension] }] })
+    if (!outputPath || !task.current(version)) return
+    const result = await task.execute<CompressionResult>(version, 'compress_image_file', {
+      inputPath: input, outputPath, outputFormat: format, jpegQuality: quality, expectedHash, expectedOutputHash })
+    if (result && task.current(version)) {
+      outputName.value = displayName(outputPath); success.value = `已保存并回读核验 ${outputName.value} · ${formatSize(result.outputSizeBytes)}`
+    }
+  } catch (cause) { if (task.current(version)) error.value = String(cause) }
+  finally { task.finish(version) }
 }
+async function cancel() { success.value = '已请求取消等待；已提交的保存不会撤销，请检查目标文件。'; await task.cancel() }
+onBeforeUnmount(() => { inputPath.value = ''; inputInfo.value = null; preview.value = null; outputName.value = ''; error.value = ''; success.value = '' })
 </script>
 
 <template>
@@ -163,6 +134,8 @@ async function saveCompressed(): Promise<void> {
       <span>{{ formatSize(preview.inputSizeBytes) }} <b>→</b> {{ formatSize(preview.outputSizeBytes) }}</span>
       <strong>{{ sizeDifference }}</strong>
     </div>
+    <p class="form-hint">输入最多 100 MiB / 4000 万像素 / 单边 16384，输出最多 128 MiB；60 秒协作时限，编解码可能延迟取消。只创建新文件；原图或编码结果与预览不一致时拒绝保存。</p>
+    <button v-if="loading" class="secondary-button" :disabled="task.cancelling.value" @click="cancel">取消等待</button>
     <p v-if="error" class="image-format-message image-format-error">{{ error }}</p>
     <p v-else-if="success" class="image-format-message"><Check :size="13" /> {{ success }}</p>
     <p v-else class="image-format-message">先预览文件大小和画质，再另存新文件；PNG 无损优化不保证体积变小。动画 GIF / WebP 会转为静态图，EXIF 等元数据不复制。</p>

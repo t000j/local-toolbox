@@ -1,7 +1,28 @@
 mod file_rename;
 mod disk_tools;
 mod image_conversion;
+mod image_io;
+mod image_codec;
 mod network;
+mod network_probe;
+mod lan_discovery;
+mod http_request;
+mod process_viewer;
+mod service_manager;
+mod startup_manager;
+mod environment_manager;
+mod hosts_editor;
+mod firewall_viewer;
+mod power_actions;
+mod monitor_info;
+mod file_scan;
+mod safe_file_io;
+mod file_export;
+mod binary_export;
+mod zip_directories;
+mod file_parts;
+mod file_parts_manifest;
+mod file_parts_stream;
 mod local_reports;
 mod native_windows;
 mod screenshot;
@@ -34,11 +55,35 @@ pub fn run() {
             image_conversion::convert_image_file,
             image_conversion::preview_image_compression,
             image_conversion::compress_image_file,
+            lan_discovery::run_lan_discovery,
+            http_request::run_http_request,
+            process_viewer::run_process_snapshot,
+            service_manager::run_service_manager,
+            startup_manager::run_startup_manager,
+            environment_manager::run_environment_manager,
+            hosts_editor::manage_hosts,
+            firewall_viewer::run_firewall_snapshot,
+            power_actions::run_power_action,
+            monitor_info::read_monitor_info,
+            file_scan::run_file_scan,
+            file_export::save_file_list,
+            binary_export::save_binary_output,
+            zip_directories::read_zip_directory,
+            zip_directories::save_zip_directory,
+            file_parts::run_file_parts,
+            network_probe::prepare_network_probe,
+            network_probe::run_dns_query,
+            network_probe::run_dns_cache,
+            network_probe::run_tcp_snapshot,
+            network_probe::run_ping,
+            network_probe::run_traceroute,
+            network_probe::cancel_network_probe,
             network::get_network_info,
             network::find_port_owners,
             network::terminate_port_process,
             native_windows::list_desktop_windows,
             native_windows::control_desktop_window,
+            native_windows::move_desktop_window,
             native_windows::list_installed_apps,
             native_windows::query_event_logs,
             native_windows::get_battery_power,

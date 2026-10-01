@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { trackedInvoke as invoke } from '../../app/activity'
+import { computed, onBeforeUnmount, ref } from 'vue'
+import { useNativeImageTask } from '../useNativeImageTask'
 import { open, save } from '@tauri-apps/plugin-dialog'
 import { Check, ImagePlus, LoaderCircle, Sparkles, Upload } from '@lucide/vue'
 
 type ImageFormat = 'png' | 'jpeg' | 'gif' | 'webp' | 'bmp' | 'tiff'
-interface ImageInfo { width: number; height: number; sizeBytes: number; format: string; previewDataUrl: string }
-interface ConversionResult { width: number; height: number; sizeBytes: number; format: string }
+interface ImageInfo { width: number; height: number; sizeBytes: number; format: string; previewDataUrl: string; sourceHash: string }
 const formats: { value: ImageFormat; label: string; extension: string }[] = [
   { value: 'png', label: 'PNG', extension: 'png' },
   { value: 'jpeg', label: 'JPG', extension: 'jpg' },
@@ -16,93 +15,48 @@ const formats: { value: ImageFormat; label: string; extension: string }[] = [
   { value: 'tiff', label: 'TIFF', extension: 'tif' },
 ]
 
-const inputPath = ref('')
-const inputInfo = ref<ImageInfo | null>(null)
-const outputInfo = ref<ImageInfo | null>(null)
-const outputName = ref('')
-const outputFormat = ref<ImageFormat>('png')
-const jpegQuality = ref(90)
-const error = ref('')
-const success = ref('')
-const loading = ref(false)
-const selectedFormat = computed(() => formats.find((format) => format.value === outputFormat.value) ?? formats[0])
-
-function displayName(path: string): string {
-  return path.split(/[\\/]/).pop() ?? path
-}
-
-function clearOutput(): void {
-  outputInfo.value = null
-  outputName.value = ''
-  error.value = ''
-  success.value = ''
-}
-
-async function selectImage(): Promise<void> {
-  error.value = ''
-  success.value = ''
+const inputPath = ref(''), inputInfo = ref<ImageInfo | null>(null), outputInfo = ref<ImageInfo | null>(null)
+const outputName = ref(''), outputFormat = ref<ImageFormat>('png'), jpegQuality = ref(90)
+const error = ref(''), success = ref('')
+const task = useNativeImageTask(), loading = task.busy
+const selectedFormat = computed(() => formats.find(f => f.value === outputFormat.value) ?? formats[0])
+function displayName(path: string) { return path.split(/[\\/]/).pop() ?? path }
+function formatSize(bytes: number) { return bytes < 1024 ? `${bytes} B` : bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB` }
+function clearOutput() { outputInfo.value = null; outputName.value = ''; error.value = ''; success.value = '' }
+async function selectImage() {
+  const version = task.begin(); if (version === null) return
+  clearOutput()
   try {
-    const selected = await open({
-      title: '选择要转换的图片',
-      multiple: false,
-      directory: false,
-      filters: [{ name: '图片', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'tif', 'tiff'] }],
-    })
-    if (typeof selected !== 'string') return
-
-    inputPath.value = selected
-    inputInfo.value = null
-    clearOutput()
-    loading.value = true
-    inputInfo.value = await invoke<ImageInfo>('inspect_image_file', { path: selected })
-  } catch (cause) {
-    inputPath.value = ''
-    inputInfo.value = null
-    error.value = cause instanceof Error ? cause.message : String(cause)
-  } finally {
-    loading.value = false
-  }
+    const selected = await open({ title: '选择要转换的图片', multiple: false, directory: false,
+      filters: [{ name: '图片', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'tif', 'tiff'] }] })
+    if (!task.current(version) || typeof selected !== 'string') return
+    inputPath.value = selected; inputInfo.value = null
+    const result = await task.execute<ImageInfo>(version, 'inspect_image_file', { path: selected })
+    if (result && task.current(version)) inputInfo.value = result
+  } catch (cause) { if (task.current(version)) { inputPath.value = ''; inputInfo.value = null; error.value = String(cause) } }
+  finally { task.finish(version) }
 }
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
-async function convertAndSave(): Promise<void> {
+async function convertAndSave() {
   if (!inputPath.value || !inputInfo.value) return
-  error.value = ''
-  success.value = ''
-  const defaultName = `${displayName(inputPath.value).replace(/\.[^.]*$/, '') || 'image'}-converted.${selectedFormat.value.extension}`
+  const version = task.begin(); if (version === null) return
+  const input = inputPath.value, expectedHash = inputInfo.value.sourceHash, format = { ...selectedFormat.value }, quality = jpegQuality.value
+  clearOutput()
   try {
-    const outputPath = await save({
-      title: '保存转换后的图片',
-      defaultPath: defaultName,
-      filters: [{ name: `${selectedFormat.value.label} 图片`, extensions: [selectedFormat.value.extension] }],
-    })
-    if (!outputPath) return
-
-    loading.value = true
-    const result = await invoke<ConversionResult>('convert_image_file', {
-      inputPath: inputPath.value,
-      outputPath,
-      format: outputFormat.value,
-      jpegQuality: jpegQuality.value,
-    })
-    outputName.value = displayName(outputPath)
-    success.value = `已保存 ${outputName.value} · ${formatSize(result.sizeBytes)}`
-    try {
-      outputInfo.value = await invoke<ImageInfo>('inspect_image_file', { path: outputPath })
-    } catch {
-      outputInfo.value = null
+    const outputPath = await save({ title: '保存转换后的图片',
+      defaultPath: `${displayName(input).replace(/\.[^.]*$/, '') || 'image'}-converted.${format.extension}`,
+      filters: [{ name: `${format.label} 图片`, extensions: [format.extension] }] })
+    if (!outputPath || !task.current(version)) return
+    const result = await task.execute<ImageInfo>(version, 'convert_image_file', {
+      inputPath: input, outputPath, format: format.value, jpegQuality: quality, expectedHash })
+    if (result && task.current(version)) {
+      outputName.value = displayName(outputPath); outputInfo.value = result
+      success.value = `已保存并回读核验 ${outputName.value} · ${formatSize(result.sizeBytes)}`
     }
-  } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : String(cause)
-  } finally {
-    loading.value = false
-  }
+  } catch (cause) { if (task.current(version)) error.value = String(cause) }
+  finally { task.finish(version) }
 }
+async function cancel() { success.value = '已请求取消等待；已提交的保存不会撤销，请检查目标文件。'; await task.cancel() }
+onBeforeUnmount(() => { inputPath.value = ''; inputInfo.value = null; outputInfo.value = null; outputName.value = ''; error.value = ''; success.value = '' })
 </script>
 
 <template>
@@ -153,6 +107,8 @@ async function convertAndSave(): Promise<void> {
       </div>
     </section>
 
+    <p class="form-hint">输入最多 100 MiB / 4000 万像素 / 单边 16384，输出最多 128 MiB；60 秒协作时限，编解码可能延迟取消。安全句柄只创建新文件，拒绝网络/链接路径。选择后的原图变化会拒绝保存。</p>
+    <button v-if="loading" class="secondary-button" :disabled="task.cancelling.value" @click="cancel">取消等待</button>
     <p v-if="error" class="image-format-message image-format-error">{{ error }}</p>
     <p v-else-if="success" class="image-format-message"><Check :size="13" /> {{ success }}</p>
     <p v-else class="image-format-message">转换在本机完成，不覆盖现有文件；JPEG 透明区域填白，动画 GIF / WebP 转换为静态图，EXIF 等元数据不复制。</p>
