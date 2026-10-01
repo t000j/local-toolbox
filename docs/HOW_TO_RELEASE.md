@@ -1,6 +1,6 @@
 # LocalToolbox 新版本发布教程
 
-这份教程按实际操作顺序编写。当前线上正式版本是 0.1.2，下面以准备发布 0.1.3 为例；以后把版本号替换为新的版本即可。
+这份教程按实际操作顺序编写。当前线上正式版本是 0.1.3，下面以准备发布 0.1.4 为例；以后把版本号替换为新的版本即可。
 
 ## 发布流程
 
@@ -26,7 +26,7 @@ git status --short
 ## 2. 同步新的版本号
 
 ```powershell
-npm run release:version -- 0.1.3
+npm run release:version -- 0.1.4
 ```
 
 该命令同步以下五个文件中的应用版本：
@@ -37,15 +37,15 @@ npm run release:version -- 0.1.3
 - src-tauri/Cargo.toml
 - src-tauri/Cargo.lock
 
-使用比已发布版本更高的版本号。不要复用 0.1.2 或已有版本标签，也不要只修改其中一个文件。
+使用比已发布版本更高的版本号。不要复用 0.1.3 或已有版本标签，也不要只修改其中一个文件。
 
 产品名 LocalToolbox、应用标识 cn.localtoolbox.desktop 和更新公钥保持稳定，它们关系到原安装位置、本机数据及旧版的更新验证。
 
 ## 3. 编写中文更新说明
 
-打开 docs/release-notes/0.1.3.md，写清楚本次新增和修复。工作流会把它用于 GitHub Release 和客户端更新说明。
+新建或打开 docs/release-notes/0.1.4.md，写清楚本次新增和修复。工作流会把它用于 GitHub Release 和客户端更新说明。
 
-仓库已经准备了 0.1.3 的设置备份与恢复说明。发布前按实际改动核对，之后新增功能也要补进该文件。下一个版本则新建相应的版本文件。
+当前 0.1.3 已发布 97 款内置工具，可参考 docs/release-notes/0.1.3.md 的说明格式。为下一版新建对应版本文件，按实际改动列出新增、修复和支持范围；继续开发时同步维护。
 
 更新根目录产品规划后，检查发布配置：
 
@@ -70,12 +70,12 @@ npm run release:build
 
 这些文件已被 Git 忽略，不提交到仓库。单独克隆源码不会获得它们；GitHub Actions 则使用已经配置的仓库 Secrets，可以独立签名构建。
 
-打包成功后，0.1.3 的本机产物位于：
+打包成功后，0.1.4 的本机产物位于：
 
 ```text
 E:\codexProject\toolbox-app\src-tauri\target\x86_64-pc-windows-msvc\release\bundle\nsis\
-  LocalToolbox_0.1.3_x64-setup.exe
-  LocalToolbox_0.1.3_x64-setup.exe.sig
+  LocalToolbox_0.1.4_x64-setup.exe
+  LocalToolbox_0.1.4_x64-setup.exe.sig
 ```
 
 本机打包用于先核对编译和安装包。正式发布流程中的 latest.json 由 GitHub Actions 自动生成，无需自己拼写签名或下载地址。
@@ -86,7 +86,7 @@ E:\codexProject\toolbox-app\src-tauri\target\x86_64-pc-windows-msvc\release\bund
 
 也可以直接让 Codex 处理这一阶段，例如：
 
-> 提交并推送本次 0.1.3 的工具实现、版本文件和配套文档到 main，保留其他修改，不推送版本标签。
+> 提交并推送本次 0.1.4 的工具实现、版本文件和配套文档到 main，保留其他修改，不推送版本标签。
 
 完成本地提交后，推送源码：
 
@@ -94,20 +94,20 @@ E:\codexProject\toolbox-app\src-tauri\target\x86_64-pc-windows-msvc\release\bund
 git push origin main
 ```
 
-到 [源码仓库](https://github.com/t000j/local-toolbox) 确认 package.json 中的版本已是 0.1.3，且本次代码和更新说明都在仓库中。只在本机修改版本号、未推送源码，GitHub 会继续使用旧代码。
+到 [源码仓库](https://github.com/t000j/local-toolbox) 确认 package.json 中的版本已是 0.1.4，且本次代码和更新说明都在仓库中。只在本机修改版本号、未推送源码，GitHub 会继续使用旧代码。
 
 ## 6. 触发 GitHub 签名构建
 
 推荐推送明确的版本标签：
 
 ```powershell
-git tag -a v0.1.3 -m "LocalToolbox v0.1.3"
-git push origin refs/tags/v0.1.3
+git tag -a v0.1.4 -m "LocalToolbox v0.1.4"
+git push origin refs/tags/v0.1.4
 ```
 
 标签必须与上述五个文件的版本一致。标签已经存在时先核对，不覆盖已发布标签。
 
-打开 [GitHub Actions](https://github.com/t000j/local-toolbox/actions)，选择 Windows installer and updater release，查看 v0.1.3 的运行。首次构建需要下载和编译依赖；等待该次运行成功。
+打开 [GitHub Actions](https://github.com/t000j/local-toolbox/actions)，选择 Windows installer and updater release，查看 v0.1.4 的运行。首次构建需要下载和编译依赖；等待该次运行成功。
 
 也可以在代码已推送后选择该工作流的 Run workflow，使用 main 手动触发。标签推送和手动触发选择一种即可，同一版本不重复执行。
 
@@ -115,18 +115,18 @@ Actions 会使用已有的 TAURI_SIGNING_PRIVATE_KEY 和 TAURI_SIGNING_PRIVATE_K
 
 ## 7. 检查草稿并正式发布
 
-打开 [Releases](https://github.com/t000j/local-toolbox/releases)，找到 LocalToolbox v0.1.3 草稿，核对：
+打开 [Releases](https://github.com/t000j/local-toolbox/releases)，找到 LocalToolbox v0.1.4 草稿，核对：
 
-1. 标签是 v0.1.3，更新说明与本次功能一致。
-2. Assets 中有 LocalToolbox_0.1.3_x64-setup.exe。
-3. 有对应的 LocalToolbox_0.1.3_x64-setup.exe.sig。
-4. 有 latest.json，version 为 0.1.3，Windows 平台条目指向本次安装包且包含 signature。
+1. 标签是 v0.1.4，更新说明与本次功能一致。
+2. Assets 中有 LocalToolbox_0.1.4_x64-setup.exe。
+3. 有对应的 LocalToolbox_0.1.4_x64-setup.exe.sig。
+4. 有 latest.json，version 为 0.1.4，Windows 平台条目指向本次安装包且包含 signature。
 
 如果构建失败或资产缺失，先打开失败步骤的日志处理，不发布缺少更新文件的草稿。
 
 编辑该草稿，正式版本不勾选 This is a pre-release，勾选 Set as latest release，然后点击 Publish release。草稿只有仓库管理者可见；正式发布后旧客户端才能读取这些更新资产。[GitHub 发布说明](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository)
 
-发布完成后打开固定更新入口，确认 version 已变为 0.1.3：
+发布完成后打开固定更新入口，确认 version 已变为 0.1.4：
 
 [latest.json](https://github.com/t000j/local-toolbox/releases/latest/download/latest.json)
 
@@ -134,12 +134,12 @@ Actions 会使用已有的 TAURI_SIGNING_PRIVATE_KEY 和 TAURI_SIGNING_PRIVATE_K
 
 ## 8. 使用旧版测试应用内更新
 
-保留已安装的 LocalToolbox 0.1.2，用它测试：
+保留已安装的 LocalToolbox 0.1.3，用它测试：
 
 1. 启动后保持“启动后自动检查更新”开启，等待检查；也可点击“关于与更新 → 检查更新”。
-2. 核对新版本 0.1.3、顶部提醒和中文更新说明。
+2. 核对新版本 0.1.4、顶部提醒和中文更新说明。
 3. 选择下载，等待完成后确认安装。
-4. 应用重启后核对版本是 0.1.3，安装目录与旧版相同。
+4. 应用重启后核对版本是 0.1.4，安装目录与旧版相同。
 5. 核对原有收藏、文本片段、工作区等数据保留，并操作本次新增工具。
 
 从旧应用内更新，才能覆盖检查、下载、验签、安装和重启的完整链路。直接双击新安装包只验证安装器，不能代表应用内更新已验证。
