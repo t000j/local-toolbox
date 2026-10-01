@@ -44,7 +44,7 @@ function bytes(value: number): string { return `${(value / 1024 / 1024).toFixed(
       <label class="updater-preference"><input v-model="autoCheck" type="checkbox" :disabled="busy" /> 启动后自动检查更新</label>
       <p v-if="!supported" class="updater-note">浏览器预览和开发模式不检查更新；安装后的正式版本可使用此功能。</p>
       <div class="updater-status" aria-live="polite">
-        <span v-if="status === 'checking'">正在检查新版本…</span>
+        <span v-if="status === 'checking'">正在连接更新服务，请稍候…</span>
         <span v-else-if="status === 'current'">当前已是最新版本。</span>
         <span v-else-if="status === 'downloading'">正在下载 {{ bytes(downloadedBytes) }}<template v-if="totalBytes"> / {{ bytes(totalBytes) }}</template></span>
         <span v-else-if="status === 'downloaded'">更新已下载并通过签名验证，可以安装。</span>

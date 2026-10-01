@@ -68,6 +68,13 @@ GitHub Actions 使用两个仓库级 Secrets：
 - 官方 tauri-action v1 的清单使用 GitHub 资产 API 下载地址；当前 Updater 插件会自动携带 application/octet-stream 请求头，可下载公开仓库的资产，无需向用户提供 GitHub Token。
 - 清单中的 windows-x86_64 与 windows-x86_64-nsis 均指向该版本安装包，签名字段与发布的 .sig 文件一致。
 
+## 0.1.4 本机修复候选（未发布）
+
+- 将检查更新超时从 12 秒提高到 45 秒，提供超时与网络连接失败的中文提示。正式版仍为 0.1.3，当前没有 v0.1.4 标签或 GitHub Release。
+- 诊断复用与 0.1.2 相同版本的 reqwest 和更新插件请求设置：12 秒请求约 12.0 秒返回 operation timed out；仅将超时提高到 45 秒后，约 15.9 秒以 HTTP 200 读取公开 0.1.3 清单。
+- 0.1.2 / 0.1.3 的超时写在客户端里，服务端更新文件无法修改它。持续超时的用户需要手动运行修复版安装包覆盖安装，保留产品名称、应用标识、更新公钥和本机配置。
+- 2026-10-01 已通过发布配置校验、Vue/TypeScript 检查、Vite 构建、Windows x64 Rust release 编译与 NSIS 签名打包，生成 `LocalToolbox_0.1.4_x64-setup.exe`（7,788,214 字节，约 7.43 MiB）和 444 字节的对应 `.sig`，并核对安装包产品名与版本。Vite 和 Rust 既有构建告警保留；实际安装、客户端更新界面和完整升级链路仍待验证。
+
 ## 后续版本
 
 ```text

@@ -9,6 +9,7 @@ import { restoredKeys, settingsRestoredEvent } from './settingsEvents'
 
 type UpdateStatus = 'idle' | 'checking' | 'current' | 'available' | 'downloading' | 'downloaded' | 'installing' | 'restartReady' | 'error'
 const preferenceKey = 'toolbox:auto-update:v1'
+const updateCheckTimeoutMs = 45000
 const currentVersion = ref(appPackage.version)
 const latestVersion = ref('')
 const releaseNotes = ref('')
@@ -50,6 +51,8 @@ function scheduleStartupCheck(): void {
 function errorText(cause: unknown): string {
   const detail = typeof cause === 'string' ? cause : cause instanceof Error ? cause.message : String(cause)
   if (detail.includes('404')) return '尚未找到正式发布的更新版本，请稍后重试。'
+  if (/timeout|timed\s*out|超时/i.test(detail)) return '连接更新服务超时，请检查网络后重试。'
+  if (/error sending request|error trying to connect|dns error/i.test(detail)) return '无法连接更新服务，请检查网络或代理设置后重试。'
   return `更新操作未完成：${detail}`
 }
 
@@ -72,7 +75,7 @@ async function checkNow(): Promise<void> {
   latestVersion.value = ''
   releaseNotes.value = ''
   try {
-    update = await check({ timeout: 12000 })
+    update = await check({ timeout: updateCheckTimeoutMs })
     if (update) {
       latestVersion.value = update.version
       releaseNotes.value = update.body ?? '此版本未提供更新说明。'
