@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { trackedInvoke as invoke } from '../../app/activity'
 import { open } from '@tauri-apps/plugin-dialog'
 import { ArrowRight, Check, FolderOpen, LoaderCircle, RotateCcw, Sparkles } from '@lucide/vue'
@@ -7,7 +7,7 @@ import { ArrowRight, Check, FolderOpen, LoaderCircle, RotateCcw, Sparkles } from
 type RenameMode = 'prefixSuffix' | 'replace'
 type PreviewStatus = 'ready' | 'unchanged' | 'conflict' | 'invalid'
 interface RenameRule { mode: RenameMode; prefix: string; suffix: string; find: string; replace: string }
-interface RenamePreview { oldPath: string; newPath: string; oldName: string; newName: string; sizeBytes: number; status: PreviewStatus; reason: string | null }
+interface RenamePreview { oldPath: string; newPath: string; oldName: string; newName: string; sizeBytes: number; status: PreviewStatus; reason: string | null; sourceStamp: string | null }
 interface RenameRecord { oldPath: string; newPath: string }
 
 const selectedPaths = ref<string[]>([])
@@ -25,13 +25,19 @@ const confirmationOpen = ref(false)
 const rule = computed<RenameRule>(() => ({ mode: mode.value, prefix: prefix.value, suffix: suffix.value, find: findText.value, replace: replaceText.value }))
 const readyCount = computed(() => previews.value.filter((item) => item.status === 'ready').length)
 const blockedCount = computed(() => previews.value.filter((item) => item.status === 'conflict' || item.status === 'invalid').length)
-const canApply = computed(() => readyCount.value > 0 && blockedCount.value === 0 && !loading.value)
+const confirmedPlan = ref<{ paths: string[]; rule: RenameRule; previews: RenamePreview[] } | null>(null)
+let revision = 0
+let request = 0
+let disposed = false
+const canApply = computed(() => confirmedPlan.value !== null && readyCount.value > 0 && blockedCount.value === 0 && !loading.value)
 
 watch([selectedPaths, mode, prefix, suffix, findText, replaceText], () => {
+  revision++
+  confirmedPlan.value = null
   previews.value = []
   confirmationOpen.value = false
   error.value = ''
-}, { deep: true })
+}, { deep: true, flush: 'sync' })
 
 function clearMessages(): void {
   error.value = ''
@@ -39,14 +45,18 @@ function clearMessages(): void {
 }
 
 async function selectFiles(): Promise<void> {
+  if (loading.value || disposed) return
+  const version = revision
+  loading.value = true
   clearMessages()
   try {
     const selection = await open({ title: '选择要重命名的文件（最多 200 个）', multiple: true, directory: false })
+    if (disposed || version !== revision) return
     if (Array.isArray(selection)) selectedPaths.value = selection
     else if (selection) selectedPaths.value = [selection]
   } catch {
-    error.value = '无法打开系统文件选择器，请在桌面应用中使用此工具。'
-  }
+    if (!disposed && version === revision) error.value = '无法打开系统文件选择器，请在桌面应用中使用此工具。'
+  } finally { if (!disposed) loading.value = false }
 }
 
 function displayName(path: string): string {
@@ -54,7 +64,11 @@ function displayName(path: string): string {
 }
 
 async function createPreview(): Promise<void> {
+  if (loading.value || disposed) return
   clearMessages()
+  confirmedPlan.value = null
+  previews.value = []
+  confirmationOpen.value = false
   if (selectedPaths.value.length === 0) {
     error.value = '请先选择要重命名的文件。'
     return
@@ -67,41 +81,42 @@ async function createPreview(): Promise<void> {
     error.value = '请输入要查找的文件名内容。'
     return
   }
+  const version = revision, current = ++request
+  const paths = [...selectedPaths.value], frozenRule = { ...rule.value }
   loading.value = true
   try {
-    previews.value = await invoke<RenamePreview[]>('preview_batch_rename', { paths: selectedPaths.value, rule: rule.value })
+    const result = await invoke<RenamePreview[]>('preview_batch_rename', { paths, rule: frozenRule })
+    if (disposed || version !== revision || current !== request) return
+    previews.value = result
+    confirmedPlan.value = { paths, rule: frozenRule, previews: result.map(item => ({ ...item })) }
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : String(cause)
-  } finally {
-    loading.value = false
-  }
+    if (!disposed && version === revision && current === request) error.value = cause instanceof Error ? cause.message : String(cause)
+  } finally { if (!disposed && current === request) loading.value = false }
 }
 
 async function renameFiles(): Promise<void> {
+  if (!confirmationOpen.value || !canApply.value || disposed) return
+  const plan = confirmedPlan.value!
   confirmationOpen.value = false
+  confirmedPlan.value = null // one-shot confirmation; failures require a new preview
   clearMessages()
   loading.value = true
   try {
-    const records = await invoke<RenameRecord[]>('rename_batch_files', { paths: selectedPaths.value, rule: rule.value })
+    const records = await invoke<RenameRecord[]>('rename_batch_files', { paths: plan.paths, rule: plan.rule, expectedPreviews: plan.previews })
+    if (disposed) return
     undoRecords.value = records
-    success.value = `已重命名 ${records.length} 个文件，可以撤销最近一次操作。`
     selectedPaths.value = []
     previews.value = []
+    success.value = `已重命名 ${records.length} 个文件；当前页面可撤销最近一次操作。`
   } catch (cause) {
-    const message = cause instanceof Error ? cause.message : String(cause)
-    try {
-      previews.value = await invoke<RenamePreview[]>('preview_batch_rename', { paths: selectedPaths.value, rule: rule.value })
-    } catch {
-      previews.value = []
-    }
-    error.value = message
-  } finally {
-    loading.value = false
-  }
+    if (disposed) return
+    previews.value = []
+    error.value = `${cause instanceof Error ? cause.message : String(cause)} 请检查文件状态并重新预览。`
+  } finally { if (!disposed) loading.value = false }
 }
 
 async function undoRename(): Promise<void> {
-  if (!undoRecords.value.length) return
+  if (!undoRecords.value.length || loading.value || disposed) return
   clearMessages()
   loading.value = true
   try {
@@ -124,6 +139,7 @@ function formatSize(bytes: number): string {
 function statusLabel(status: PreviewStatus): string {
   return { ready: '可改名', unchanged: '名称不变', conflict: '名称冲突', invalid: '无法改名' }[status]
 }
+onBeforeUnmount(() => { disposed = true; revision++; request++ })
 </script>
 
 <template>
@@ -143,26 +159,27 @@ function statusLabel(status: PreviewStatus): string {
 
     <section class="rename-rule-card">
       <div class="field-heading"><label for="rename-mode">命名规则</label><span class="field-suffix">扩展名保持不变</span></div>
-      <select id="rename-mode" v-model="mode" class="rename-mode-select">
+      <select id="rename-mode" v-model="mode" :disabled="loading" class="rename-mode-select">
         <option value="prefixSuffix">添加前缀 / 后缀</option>
         <option value="replace">查找并替换文件名</option>
       </select>
       <div v-if="mode === 'prefixSuffix'" class="rename-rule-fields">
-        <label>前缀<input v-model="prefix" class="text-input" placeholder="例如：2026-" /></label>
-        <label>后缀<input v-model="suffix" class="text-input" placeholder="例如：-备份" /></label>
+        <label>前缀<input v-model="prefix" :disabled="loading" class="text-input" placeholder="例如：2026-" /></label>
+        <label>后缀<input v-model="suffix" :disabled="loading" class="text-input" placeholder="例如：-备份" /></label>
       </div>
       <div v-else class="rename-rule-fields">
-        <label>查找<input v-model="findText" class="text-input" placeholder="要替换的文件名片段" /></label>
-        <label>替换为<input v-model="replaceText" class="text-input" placeholder="新内容，可留空以删除" /></label>
+        <label>查找<input v-model="findText" :disabled="loading" class="text-input" placeholder="要替换的文件名片段" /></label>
+        <label>替换为<input v-model="replaceText" :disabled="loading" class="text-input" placeholder="新内容，可留空以删除" /></label>
       </div>
       <div class="rename-rule-footer">
-        <p class="form-hint">先预览并检查冲突；确认后才会改名，可撤销最近一次批量操作。</p>
+        <p class="form-hint">先预览并检查冲突；确认后执行同一计划。仅本页保留最近一次撤销记录；不支持仅大小写改名。</p>
         <button class="primary-button" :disabled="!selectedPaths.length || loading" @click="createPreview">
           <LoaderCircle v-if="loading" class="spin-icon" :size="15" /><Sparkles v-else :size="15" /> {{ loading ? '处理中…' : '预览改名' }}
         </button>
       </div>
     </section>
 
+    <button v-if="undoRecords.length && !success && !previews.length" class="secondary-button" :disabled="loading" @click="undoRename"><RotateCcw :size="14" /> 撤销上次改名（仅本页）</button>
     <p v-if="error" class="rename-message rename-error">{{ error }}</p>
     <div v-else-if="success" class="rename-feedback-row">
       <p class="rename-message rename-success"><Check :size="14" /> {{ success }}</p>

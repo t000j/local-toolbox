@@ -3,6 +3,7 @@ import { inspectPdfImagePredictor, inflatePdfPredictedImage } from './pdfImagePr
 import { boundedInflatePdf } from './pdfBoundedInflate'
 import { auditPdfCmap } from './pdfCmapBudget'
 import { pdfFail } from './pdfRawSyntax'
+import { rejectPdfInlineImages } from './pdfContentSyntax'
 import { pdfPreviewRoles } from './pdfPreviewRoles'
 import { inspectPdfPreviewImage, inspectPdfPreviewJpeg, inspectPdfPreviewMasks } from './pdfPreviewImages'
 import type { PdfPreviewImage } from './pdfPreviewImages'
@@ -86,9 +87,9 @@ function auditPdfResources(doc: PDFDocument, textOnly: boolean): Set<PDFRawStrea
       if (pixels > PDF_PREVIEW_TOTAL_IMAGE_PIXELS) pdfFail('缩略图图片与蒙版累计超过1600万像素。')
     } else if (!font) {
       auditPdfCmap(decoded, cmapBudget)
-      // Contents, Form, CMap, metadata and unknown streams remain conservative.
-      // Only role-proven image/font bytes can contain incidental BI/CMap strings.
-      for (let i = 0; i + 1 < decoded.length; i++) if (decoded[i] === 66 && decoded[i + 1] === 73) pdfFail('缩略图拒绝BI内联图像及疑似字节；页面导出不受此预览限制。')
+      // Only operator tokens can begin inline images; literal text, hex strings,
+      // names and comments do not execute BI. Binary role proof stays unchanged.
+      rejectPdfInlineImages(decoded)
     }
     total += charge
   }

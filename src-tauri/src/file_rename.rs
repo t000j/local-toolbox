@@ -20,7 +20,7 @@ enum RenameMode {
     Replace,
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct RenamePreview {
     old_path: String,
@@ -28,6 +28,7 @@ pub struct RenamePreview {
     old_name: String,
     new_name: String,
     size_bytes: u64,
+    source_stamp: Option<String>,
     status: String,
     reason: Option<String>,
 }
@@ -82,6 +83,7 @@ fn make_preview(path_text: &str, rule: &RenameRule) -> RenamePreview {
         old_name: old_name.clone(),
         new_name: old_name,
         size_bytes: 0,
+        source_stamp: None,
         status: "invalid".to_owned(),
         reason: None,
     };
@@ -105,6 +107,16 @@ fn make_preview(path_text: &str, rule: &RenameRule) -> RenamePreview {
         }
     };
     preview.size_bytes = metadata.len();
+    // Protected, handle-relative read rejects reparse ancestors and captures a
+    // stable identity/version. Execution must match this exact preview stamp.
+    let stamp = (|| {
+        let (directory, name) = crate::safe_file_io::Directory::parent(path_text)?;
+        crate::safe_file_io::stamp_key(&directory.read(&name)?)
+    })();
+    match stamp {
+        Ok(value) => preview.source_stamp = Some(value),
+        Err(error) => { fail(&mut preview, error); return preview; }
+    }
 
     let Some(stem) = path.file_stem().and_then(|value| value.to_str()) else {
         fail(&mut preview, "无法读取文件名".to_owned());
@@ -133,8 +145,11 @@ fn make_preview(path_text: &str, rule: &RenameRule) -> RenamePreview {
     let target = parent.join(&new_name);
     preview.new_name = new_name;
     preview.new_path = target.to_string_lossy().into_owned();
-    if folded_path(&path) == folded_path(&target) {
+    if path == target {
         preview.status = "unchanged".to_owned();
+    } else if folded_path(&path) == folded_path(&target) {
+        preview.status = "invalid".to_owned();
+        preview.reason = Some("暂不支持仅大小写改名，请选择不同名称".to_owned());
     } else if target.exists() {
         preview.status = "conflict".to_owned();
         preview.reason = Some("目标文件名已存在".to_owned());
@@ -217,14 +232,22 @@ fn execute_records(records: &[RenameRecord]) -> Result<(), String> {
     Ok(())
 }
 
+fn verify_confirmed_previews(current: &[RenamePreview], expected: &[RenamePreview]) -> Result<(), String> {
+    if current != expected {
+        return Err("文件身份、内容版本、名称或规则已与确认预览不一致；请重新预览".to_owned());
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub fn preview_batch_rename(paths: Vec<String>, rule: RenameRule) -> Result<Vec<RenamePreview>, String> {
     build_previews(&paths, &rule)
 }
 
 #[tauri::command]
-pub fn rename_batch_files(paths: Vec<String>, rule: RenameRule) -> Result<Vec<RenameRecord>, String> {
+pub fn rename_batch_files(paths: Vec<String>, rule: RenameRule, expected_previews: Vec<RenamePreview>) -> Result<Vec<RenameRecord>, String> {
     let previews = build_previews(&paths, &rule)?;
+    verify_confirmed_previews(&previews, &expected_previews)?;
     if let Some(blocked) = previews.iter().find(|preview| preview.status != "ready" && preview.status != "unchanged") {
         return Err(blocked.reason.clone().unwrap_or_else(|| "存在无法执行的文件名".to_owned()));
     }
@@ -245,4 +268,41 @@ pub fn undo_batch_rename(records: Vec<RenameRecord>) -> Result<(), String> {
         .map(|record| RenameRecord { old_path: record.new_path.clone(), new_path: record.old_path.clone() })
         .collect();
     execute_records(&reversed)
+}
+
+#[cfg(test)]
+mod audit_tests {
+    use super::*;
+    fn preview() -> RenamePreview {
+        RenamePreview { old_path: r"C:\fixture\report.txt".into(), new_path: r"C:\fixture\old-report.txt".into(),
+            old_name: "report.txt".into(), new_name: "old-report.txt".into(), size_bytes: 3,
+            source_stamp: Some("1:22:3:44:55".into()), status: "ready".into(), reason: None }
+    }
+    #[test]
+    fn confirmed_preview_rejects_changed_identity_version_rule_and_order() {
+        let expected = vec![preview()];
+        assert!(verify_confirmed_previews(&expected, &expected).is_ok());
+        for field in 0..6 {
+            let mut current = expected.clone();
+            match field {
+                0 => current[0].source_stamp = Some("1:99:3:44:55".into()),
+                1 => current[0].source_stamp = Some("1:22:3:44:56".into()),
+                2 => current[0].new_path = r"C:\fixture\new-report.txt".into(),
+                3 => current[0].size_bytes = 4,
+                4 => current[0].status = "conflict".into(),
+                _ => current[0].source_stamp = None,
+            }
+            assert!(verify_confirmed_previews(&current, &expected).is_err());
+        }
+        assert!(verify_confirmed_previews(&[], &expected).is_err());
+        let mut second = preview(); second.old_path = r"C:\fixture\another.txt".into();
+        assert!(verify_confirmed_previews(&[preview(), second.clone()], &[second, preview()]).is_err());
+    }
+    #[test]
+    fn preview_api_preserves_opaque_identity_as_text() {
+        let value = serde_json::to_value(preview()).unwrap();
+        assert_eq!(value["sourceStamp"], "1:22:3:44:55");
+        let decoded: RenamePreview = serde_json::from_value(value).unwrap();
+        assert!(verify_confirmed_previews(&[decoded], &[preview()]).is_ok());
+    }
 }

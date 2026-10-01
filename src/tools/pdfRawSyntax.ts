@@ -6,21 +6,6 @@ export const pdfDelimiter = (byte: number | undefined): boolean => byte === unde
 export interface RawBudget { nodes: number }
 export interface RawValue { kind: string; number?: number; ref?: string; length?: number; lengthRef?: { ref: string; start: number; end: number }; root?: string; size?: number; name?: string; array?: RawValue[]; dict?: Map<string, RawValue>; encoded?: Uint8Array }
 const forbiddenPreparse = new Set(['ObjStm', 'XRef', 'XRefStm', 'Encrypt', 'Prev'])
-export function rejectStreamNames(bytes: Uint8Array): void {
-  // Scan even strings/comments/stream payloads: false positives are preferable to missing a parser decompression path.
-  for (let i = 0; i < bytes.length; i++) if (bytes[i] === 47) {
-    let name = ''
-    for (let p = i + 1; p < bytes.length && !pdfDelimiter(bytes[p]) && name.length < 12; p++) {
-      let value = bytes[p]!
-      if (value === 35 && p + 2 < bytes.length) {
-        const hex = String.fromCharCode(bytes[p + 1]!, bytes[p + 2]!)
-        if (/^[0-9a-f]{2}$/i.test(hex)) { value = Number.parseInt(hex, 16); p += 2 }
-      }
-      name += String.fromCharCode(value)
-      if (forbiddenPreparse.has(name) && pdfDelimiter(bytes[p + 1])) pdfFail(`不支持 ${name}：加密、增量更新、对象流和交叉引用流均拒绝解析。`)
-    }
-  }
-}
 export class PdfRawReader {
   offset = 0
   nodes = 0

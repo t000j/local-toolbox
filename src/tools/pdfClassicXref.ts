@@ -6,7 +6,7 @@ export interface ClassicXref { offset: number; entries: Map<number, ClassicEntry
 // This is only a candidate index. The separate original-byte scan must prove every live offset.
 export function readClassicXref(bytes: Uint8Array, offset: number, budget: RawBudget): ClassicXref {
   const reader = new PdfRawReader(bytes, true, budget, false); reader.offset = offset
-  if (bytes[offset] !== 120) pdfFail('startxref 必须精确指向 xref。')
+  if (bytes[offset] !== 120) pdfFail('startxref 必须精确指向经典 xref；XRef 流应先经过单独准入。')
   reader.expect('xref'); const entries = new Map<number, ClassicEntry>(); let count = 0
   while (!reader.keyword('trailer', false)) {
     const start = reader.unsigned(), size = reader.unsigned()

@@ -92,6 +92,12 @@ pub(crate) fn stamp(file: &File) -> Result<Stamp,String> {
     if unsafe {GetFileInformationByHandleEx(file.as_raw_handle(),0,(&mut b as *mut Basic).cast(),size_of::<Basic>() as u32)}==0 || (i.id_hi==0 && i.id_lo==0) {return Err("无法核验文件标识或变更时间。".into());}
     Ok(Stamp{size:((i.size_hi as u64)<<32)|i.size_lo as u64,volume:i.volume,id:((i.id_hi as u64)<<32)|i.id_lo as u64,modified:((i.modified[1] as u64)<<32)|i.modified[0] as u64,change:b.change})
 }
+// Opaque identity/version for binding a user-visible preview to a later read.
+// This does not replace a retained handle for a mutation's final race window.
+pub(crate) fn stamp_key(file: &File) -> Result<String,String> {
+    let s = stamp(file)?;
+    Ok(format!("{}:{}:{}:{}:{}", s.volume, s.id, s.size, s.modified, s.change))
+}
 pub(crate) struct NewFile { pub file: File, committed: bool }
 impl NewFile {
     pub(crate) fn create_at(parent: &File,name: &str) -> Result<Self,String> {

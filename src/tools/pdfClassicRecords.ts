@@ -1,10 +1,12 @@
-import { PDF_MAX_OBJECTS, PdfRawReader, pdfFail, rejectStreamNames } from './pdfRawSyntax'
+import { PDF_MAX_OBJECTS, PdfRawReader, pdfFail } from './pdfRawSyntax'
 import { classicLengthResolver, readClassicXref } from './pdfClassicXref'
 import { readPdfStream, readStartXref } from './pdfStreamRecords'
 import type { PdfRecord } from './pdfStreamRecords'
 const encoder = new TextEncoder()
 export function readClassicRecords(bytes: Uint8Array, indirect = false) {
-  rejectStreamNames(bytes)
+  // Parse every object dictionary and the validated trailer before pdf-lib.
+  // Raw payload/string bytes are not structural names; PdfRawReader.name keeps
+  // rejecting forbidden names at their actual syntax positions.
   const budget = { nodes: 0 }, xref = readClassicXref(bytes, readStartXref(bytes), budget), resolve = classicLengthResolver(bytes, xref, budget)
   const reader = new PdfRawReader(bytes, true, budget, false), records: PdfRecord[] = [], objects = new Map<string, number>(), ids = new Set<number>()
   let patched = 0; reader.offset = 8

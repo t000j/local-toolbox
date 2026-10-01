@@ -2,7 +2,7 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),ts=require('typescript'),pdf=require('pdf-lib')
 const cache=new Map()
 function load(name){if(cache.has(name))return cache.get(name);const exports={};cache.set(name,exports);const code=ts.transpileModule(fs.readFileSync(path.join('src/tools',`${name}.ts`),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;new Function('exports','require',code)(exports,id=>id.startsWith('.')?load(id.replace(/^\.\//,'')):require(id));return exports}
-const {mergePdfs,PDF_MERGE_LIMITATIONS}=load('pdfMerge'),{preflightPdf}=load('pdfPreflight'),{rejectStreamNames}=load('pdfRawSyntax')
+const {mergePdfs,PDF_MERGE_LIMITATIONS}=load('pdfMerge'),{preflightPdf}=load('pdfPreflight'),{PdfRawReader}=load('pdfRawSyntax')
 let checks=0
 const eq=(a,b)=>{assert.deepEqual(a,b);checks++},ok=value=>{assert.ok(value);checks++},throws=(fn,re)=>{assert.throws(fn,re);checks++},reject=async(fn,re)=>{await assert.rejects(fn,re);checks++}
 const item=(bytes,name='synthetic.pdf')=>({name,bytes}),save=doc=>doc.save({useObjectStreams:false,addDefaultPage:false,updateFieldAppearances:false})
@@ -19,7 +19,7 @@ async function main(){
  const blank=rawPdf(minimal);eq((await mergePdfs([item(blank),item(blank)])).pages,2)
  for(const inputs of [[],[item(first)],Array.from({length:9},()=>item(first)),[null,item(first)],[item(first,''),item(second)],[item(Buffer.alloc(8*1024*1024+1)),item(second)],[item(Buffer.alloc(8*1024*1024)),item(Buffer.alloc(8*1024*1024)),item(second)]])await reject(()=>mergePdfs(inputs))
  for(const bytes of [Buffer.from('not PDF'),Buffer.from('%PDF-2.0\n%%EOF'),Buffer.concat([blank,Buffer.from('extra')]),blank.subarray(0,-1)])await reject(()=>mergePdfs([item(bytes),item(second)]))
- for(const name of ['ObjStm','XRef','Encrypt','XRefStm','Prev'])for(const encoded of [name,[...name].map(c=>'#'+c.charCodeAt(0).toString(16).toUpperCase()).join(''),[...name].map(c=>'#'+c.charCodeAt(0).toString(16)).join('')])throws(()=>rejectStreamNames(Buffer.from(`% comment\n /${encoded}\n`)))
+ for(const name of ['ObjStm','XRef','Encrypt','XRefStm','Prev'])for(const encoded of [name,[...name].map(c=>'#'+c.charCodeAt(0).toString(16).toUpperCase()).join(''),[...name].map(c=>'#'+c.charCodeAt(0).toString(16)).join('')])throws(()=>new PdfRawReader(Buffer.from(`% comment\n /${encoded}\n`), false).object())
  const originalLoad=pdf.PDFDocument.load;let calls=0;pdf.PDFDocument.load=async(...args)=>{calls++;return originalLoad.apply(pdf.PDFDocument,args)}
  await reject(()=>mergePdfs([item(rawPdf([...minimal,'<< /Type /#4FbjStm /Length 3 /Filter /FlateDecode >>\nstream\nxxx\nendstream'])),item(second)]),/ObjStm/);eq(calls,0);pdf.PDFDocument.load=originalLoad
  const compressed=await pdf.PDFDocument.create({updateMetadata:false});compressed.addPage();const objectStream=await compressed.save();eq((await mergePdfs([item(objectStream),item(second)])).pages,2)

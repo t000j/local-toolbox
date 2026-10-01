@@ -219,7 +219,7 @@ async function saveSelection(): Promise<void> {
   busy.value = true
   try {
     const outputPath = await save({
-      title: '保存区域截图',
+      title: '保存区域截图（新文件，不覆盖）',
       defaultPath: `区域截图-${new Date().toISOString().replace(/[:.]/g, '-')}.png`,
       filters: [{ name: 'PNG 图片', extensions: ['png'] }],
     })
@@ -268,11 +268,11 @@ onBeforeUnmount(releaseScreenshot)
 
     <div class="region-screenshot-actions">
       <button class="primary-button" :disabled="busy || !hasSelection" @click="copySelection"><ClipboardCopy :size="14" /> 复制所选区域</button>
-      <button class="secondary-button" :disabled="busy || !hasSelection" @click="saveSelection"><Download :size="14" /> 保存 PNG</button>
+      <button class="secondary-button" :disabled="busy || !hasSelection" @click="saveSelection"><Download :size="14" /> 另存新 PNG</button>
       <span v-if="hasSelection" class="region-screenshot-size"><Check :size="13" /> {{ selectionLabel }}</span>
     </div>
     <p v-if="error" class="inline-error">{{ error }}</p>
     <p v-else-if="message" class="region-screenshot-message" role="status">{{ message }}</p>
-    <p class="region-screenshot-footnote">每次截图前都需在 WebView2 屏幕选择器中确认；截图仅在本机处理，不会上传。复制后可粘贴到其他应用。</p>
+    <p class="region-screenshot-footnote">每次截图前都需在 WebView2 屏幕选择器中确认；截图仅在本机处理，不会上传。复制后可粘贴到其他应用。保存请选择本地子目录中的新文件；不覆盖已有文件，不支持盘符根目录或网络路径。</p>
   </div>
 </template>
