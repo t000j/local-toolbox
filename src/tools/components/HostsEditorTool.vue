@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
+import { useToolLeaveGuard, requestToolNavigation } from '../../app/toolNavigation'
 import { trackedInvoke as invoke } from '../../app/activity'
 interface Snapshot { path: string; content: string; bom: boolean; backup: string | null }
 const snapshot = ref<Snapshot | null>(null), content = ref(''), busy = ref(false), error = ref(''), notice = ref('')
 const preview = ref(false), accepted = ref(false), editing = ref(false)
 let disposed = false
+useToolLeaveGuard({ label: 'Hosts 编辑尚未保存', dirty: () => content.value !== (snapshot.value?.content ?? ''), busy: () => busy.value,
+  escape: () => { if (preview.value) { preview.value = false; accepted.value = false; return true }; return false },
+})
 const changes = computed(() => {
   const old = (snapshot.value?.content ?? '').split(/\r?\n/), next = content.value.split(/\r?\n/)
   return Array.from({ length: Math.max(old.length, next.length) }, (_, i) => ({ line: i + 1, old: old[i], next: next[i] }))
@@ -30,7 +34,7 @@ onBeforeUnmount(() => { disposed = true; snapshot.value = null; content.value = 
 <template>
   <div class="tool-form">
     <p class="form-hint">仅 Windows 系统固定 Hosts 路径；严格 UTF-8 / ASCII（保留 BOM），最多 256 KiB。拒绝链接路径、硬链接和无效主机格式；不提权或改变权限，权限不足即失败。备份在原目录，未加密，请妥善保管。</p>
-    <button class="primary-button" :disabled="busy" @click="run(false)">读取 / 重新读取（丢弃本页编辑）</button>
+    <button class="primary-button" :disabled="busy" @click="requestToolNavigation(() => run(false))">读取 / 重新读取（丢弃本页编辑）</button>
     <p class="form-hint">{{ snapshot?.path }}</p>
     <label><input v-model="editing" type="checkbox" :disabled="busy || !snapshot" @change="preview = false; accepted = false" /> 允许本页编辑（写入仍需另行确认）</label>
     <textarea v-model="content" class="native-input" rows="12" maxlength="262141" spellcheck="false" :readonly="!editing || busy || !snapshot" @input="preview = false; accepted = false" />

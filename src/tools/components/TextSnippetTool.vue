@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { Check, ClipboardCopy, Pencil, Plus, Search, Trash, X } from '@lucide/vue'
+import { useToolLeaveGuard, requestToolNavigation } from '../../app/toolNavigation'
 import { copyText } from '../clipboard'
 
 interface TextSnippet { id: string; title: string; content: string; updatedAt: number }
@@ -24,6 +25,14 @@ const visibleSnippets = computed(() => {
   return [...snippets.value]
     .filter((snippet) => !term || `${snippet.title} ${snippet.content}`.toLocaleLowerCase().includes(term))
     .sort((left, right) => right.updatedAt - left.updatedAt)
+})
+const draftDirty = computed(() => {
+  if (!editorOpen.value) return false
+  const original = snippets.value.find(item => item.id === editingId.value)
+  return title.value !== (original?.title ?? '') || content.value !== (original?.content ?? '')
+})
+useToolLeaveGuard({ label: '文本片段尚未保存', dirty: () => draftDirty.value, save: () => { saveSnippet(); return !editorOpen.value },
+  escape: () => { if (pendingDeleteId.value) { pendingDeleteId.value = ''; return true }; return false },
 })
 let copiedTimer: number | undefined
 
@@ -81,6 +90,15 @@ function editSnippet(snippet: TextSnippet): void {
   editorOpen.value = true
 }
 
+function requestEditSnippet(id: string): void {
+  requestToolNavigation(() => {
+    // Saving can replace the array item while the leave prompt is open.
+    // Resolve by stable ID now, never reopen a captured pre-save object.
+    const current = snippets.value.find(item => item.id === id)
+    if (current) editSnippet(current)
+  })
+}
+
 function saveSnippet(): void {
   const normalizedTitle = title.value.trim()
   if (!normalizedTitle) { formError.value = '请填写片段名称。'; return }
@@ -125,11 +143,11 @@ onBeforeUnmount(() => window.clearTimeout(copiedTimer))
     </header>
 
     <form v-if="editorOpen" class="text-snippet-editor" @submit.prevent="saveSnippet">
-      <div class="text-snippet-editor-heading"><strong>{{ editingId ? '编辑片段' : '新建片段' }}</strong><button type="button" class="quiet-button" aria-label="关闭编辑" @click="resetEditor"><X :size="14" /></button></div>
+      <div class="text-snippet-editor-heading"><strong>{{ editingId ? '编辑片段' : '新建片段' }}</strong><button type="button" class="quiet-button" aria-label="关闭编辑" @click="requestToolNavigation(resetEditor)"><X :size="14" /></button></div>
       <label class="text-snippet-field"><span>名称</span><input v-model="title" :maxlength="maxTitleLength" placeholder="例如：会议邀请、常用命令" /></label>
       <label class="text-snippet-field"><span>文本内容</span><textarea v-model="content" :maxlength="maxContentLength" placeholder="输入要保存的文本…"></textarea></label>
       <p v-if="formError" class="inline-error">{{ formError }}</p>
-      <div class="text-snippet-editor-footer"><small>{{ content.length.toLocaleString('zh-CN') }} / {{ maxContentLength }} 字符</small><div><button type="button" class="secondary-button" @click="resetEditor">取消</button><button type="submit" class="primary-button">{{ editingId ? '保存修改' : '保存片段' }}</button></div></div>
+      <div class="text-snippet-editor-footer"><small>{{ content.length.toLocaleString('zh-CN') }} / {{ maxContentLength }} 字符</small><div><button type="button" class="secondary-button" @click="requestToolNavigation(resetEditor)">取消</button><button type="submit" class="primary-button">{{ editingId ? '保存修改' : '保存片段' }}</button></div></div>
     </form>
 
     <div class="text-snippet-search-row">
@@ -143,7 +161,7 @@ onBeforeUnmount(() => window.clearTimeout(copiedTimer))
         <div class="text-snippet-card-main"><div class="text-snippet-card-heading"><strong>{{ snippet.title }}</strong><small>{{ formatTime(snippet.updatedAt) }}</small></div><pre>{{ snippet.content }}</pre></div>
         <div class="text-snippet-card-actions">
           <button class="quiet-button" :aria-label="copiedId === snippet.id ? '已复制' : `复制${snippet.title}`" @click="copySnippet(snippet)"><Check v-if="copiedId === snippet.id" :size="14" /><ClipboardCopy v-else :size="14" /> {{ copiedId === snippet.id ? '已复制' : '复制' }}</button>
-          <button class="quiet-button" :aria-label="`编辑${snippet.title}`" @click="editSnippet(snippet)"><Pencil :size="14" /></button>
+          <button class="quiet-button" :aria-label="`编辑${snippet.title}`" @click="requestEditSnippet(snippet.id)"><Pencil :size="14" /></button>
           <button class="quiet-button" :aria-label="`删除${snippet.title}`" @click="pendingDeleteId = pendingDeleteId === snippet.id ? '' : snippet.id"><Trash :size="14" /></button>
         </div>
         <div v-if="pendingDeleteId === snippet.id" class="text-snippet-delete-confirm"><span>删除“{{ snippet.title }}”？</span><button class="quiet-button" @click="pendingDeleteId = ''">取消</button><button class="quiet-button text-snippet-delete-button" @click="deleteSnippet(snippet)">确认删除</button></div>

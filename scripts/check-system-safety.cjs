@@ -33,7 +33,7 @@ function setup(file, names, modules) {
   const e = {}, hooks = []
   const source = read(file).split('<script setup lang="ts">')[1].split('</script>')[0]
   new Function('exports', 'require', compile(source + '\nexport {' + names + '};'))(e,
-    name => name === 'vue' ? { ref: refs, computed: fn => ({ get value() { return fn() } }), onBeforeUnmount: fn => hooks.push(fn) } : modules(name))
+    name => name === 'vue' ? { ref: refs, computed: fn => ({ get value() { return fn() } }), onBeforeUnmount: fn => hooks.push(fn) } : name.endsWith('/toolNavigation') ? { useToolLeaveGuard: () => {}, requestToolNavigation: action => action() } : modules(name))
   return { ...e, hooks }
 }
 async function lifecycle() {

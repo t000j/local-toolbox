@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, shallowRef } from 'vue'
+import { useToolLeaveGuard } from '../../app/toolNavigation'
 import { trackedInvoke as invoke } from '../../app/activity'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { save } from '@tauri-apps/plugin-dialog'
@@ -37,7 +38,9 @@ const maxSourceBytes = 100 * 1024 * 1024
 const maxSourcePixels = 40_000_000
 const maxClipboardPixels = 12_000_000
 const maxPngBytes = 64 * 1024 * 1024
-let isDrawing = false
+const isDrawing = ref(false)
+const savedAnnotations = ref('[]')
+const hasUnsavedChanges = computed(() => !!pendingTextPoint.value || isDrawing.value || JSON.stringify(annotations.value) !== savedAnnotations.value)
 let drawStart: Point | null = null
 let activeEnd: Point | null = null
 let activePoints: Point[] = []
@@ -54,6 +57,8 @@ async function setSource(bitmap: ImageBitmap, name: string): Promise<void> {
   sourceWidth.value = bitmap.width
   sourceHeight.value = bitmap.height
   annotations.value = []
+  savedAnnotations.value = '[]'
+  isDrawing.value = false
   pendingSourceAction.value = null
   pendingTextPoint.value = null
   textDraft.value = ''
@@ -105,7 +110,8 @@ function continueSourceAction(): void {
 function requestSourceAction(action: SourceAction): void {
   error.value = ''
   message.value = ''
-  if (annotations.value.length || pendingTextPoint.value) pendingSourceAction.value = action
+  if (busy.value) return
+  if (hasUnsavedChanges.value) pendingSourceAction.value = action
   else runSourceAction(action)
 }
 
@@ -243,7 +249,7 @@ function renderCanvas(): void {
   context.clearRect(0, 0, canvas.width, canvas.height)
   context.drawImage(bitmap, 0, 0)
   annotations.value.forEach((annotation) => drawAnnotation(context, annotation))
-  if (isDrawing && drawStart && activeEnd) {
+  if (isDrawing.value && drawStart && activeEnd) {
     if (selectedTool.value === 'arrow') drawArrow(context, drawStart, activeEnd, color.value, lineWidth.value)
     else if (selectedTool.value === 'marker') drawMarker(context, activePoints, color.value, lineWidth.value)
   }
@@ -264,7 +270,7 @@ function startDrawing(event: PointerEvent): void {
   if (!point) return
   if (selectedTool.value === 'text') {
     pendingTextPoint.value = point
-    textDraft.value = ''
+    // Reposition the pending text without silently erasing a typed draft.
     renderCanvas()
     return
   }
@@ -273,12 +279,12 @@ function startDrawing(event: PointerEvent): void {
   drawStart = point
   activeEnd = point
   activePoints = [point]
-  isDrawing = true
+  isDrawing.value = true
   renderCanvas()
 }
 
 function continueDrawing(event: PointerEvent): void {
-  if (!isDrawing) return
+  if (!isDrawing.value) return
   const point = canvasPoint(event)
   if (!point) return
   activeEnd = point
@@ -290,14 +296,14 @@ function continueDrawing(event: PointerEvent): void {
 }
 
 function finishDrawing(event: PointerEvent): void {
-  if (busy.value || !isDrawing || !drawStart) return
+  if (busy.value || !isDrawing.value || !drawStart) return
   continueDrawing(event)
   if (selectedTool.value === 'arrow' && activeEnd && Math.hypot(activeEnd.x - drawStart.x, activeEnd.y - drawStart.y) >= 4) {
     annotations.value.push({ id: crypto.randomUUID(), kind: 'arrow', start: drawStart, end: activeEnd, color: color.value, width: lineWidth.value })
   } else if (selectedTool.value === 'marker' && activePoints.length) {
     annotations.value.push({ id: crypto.randomUUID(), kind: 'marker', points: [...activePoints], color: color.value, width: lineWidth.value })
   }
-  isDrawing = false
+  isDrawing.value = false
   drawStart = null
   activeEnd = null
   activePoints = []
@@ -335,9 +341,20 @@ function blobToBase64(blob: Blob): Promise<string> {
 }
 
 function exportBlob(): Promise<Blob> {
-  const canvas = canvasRef.value
-  if (!canvas || !sourceBitmap.value) throw new Error('请先打开一张图片或截取屏幕。')
-  return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('生成标注图片失败。')), 'image/png'))
+  if (!sourceBitmap.value) throw new Error('请先打开一张图片或截取屏幕。')
+  if (pendingTextPoint.value) throw new Error('请先添加或取消待编辑文字，再导出图片。')
+  if (isDrawing.value) throw new Error('请先完成当前标注，再导出图片。')
+  // A dedicated output canvas contains only the source and committed annotations.
+  const canvas = document.createElement('canvas')
+  canvas.width = sourceWidth.value; canvas.height = sourceHeight.value
+  const context = canvas.getContext('2d')
+  if (!context) throw new Error('无法创建导出画布。')
+  context.drawImage(sourceBitmap.value, 0, 0)
+  annotations.value.forEach(annotation => drawAnnotation(context, annotation))
+  return new Promise((resolve, reject) => canvas.toBlob((blob) => {
+    canvas.width = 0; canvas.height = 0
+    if (blob) resolve(blob); else reject(new Error('生成标注图片失败。'))
+  }, 'image/png'))
 }
 
 async function copyAnnotatedImage(): Promise<void> {
@@ -368,22 +385,26 @@ async function copyAnnotatedImage(): Promise<void> {
   }
 }
 
-async function saveAnnotatedImage(): Promise<void> {
-  if (busy.value || !sourceBitmap.value) return
+async function saveAnnotatedImage(): Promise<boolean> {
+  if (busy.value || !sourceBitmap.value) return false
+  if (pendingTextPoint.value || isDrawing.value) { error.value = '请先添加/取消待编辑文字，或完成当前标注，再保存。'; return false }
   error.value = ''
   message.value = ''
   busy.value = true
   try {
     const name = sourceName.value.replace(/\.[^.]*$/, '') || '图片'
     const suffix = new Date().toISOString().replace(/[:.]/g, '-')
-    const outputPath = await save({ title: '保存截图标注', defaultPath: `${name}-标注-${suffix}.png`, filters: [{ name: 'PNG 图片', extensions: ['png'] }] })
-    if (!outputPath) return
+    const outputPath = await save({ title: '保存截图标注（新文件，不覆盖）', defaultPath: `${name}-标注-${suffix}.png`, filters: [{ name: 'PNG 图片', extensions: ['png'] }] })
+    if (!outputPath) return false
     const blob = await exportBlob()
     if (blob.size > maxPngBytes) throw new Error('标注图片超过 64 MB 保存上限。')
     await invoke('save_annotated_png', { outputPath, pngBase64: await blobToBase64(blob) })
+    savedAnnotations.value = JSON.stringify(annotations.value)
     message.value = `标注图片已保存到 ${outputPath}`
+    return true
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '保存图片失败。'
+    return false
   } finally {
     busy.value = false
   }
@@ -395,12 +416,17 @@ function clearSource(): void {
   sourceWidth.value = 0
   sourceHeight.value = 0
   annotations.value = []
+  savedAnnotations.value = '[]'
+  isDrawing.value = false
   pendingSourceAction.value = null
   pendingTextPoint.value = null
   error.value = ''
   message.value = ''
 }
 
+useToolLeaveGuard({ label: '截图标注尚未保存', dirty: () => hasUnsavedChanges.value, busy: () => busy.value, save: saveAnnotatedImage,
+  escape: () => { if (pendingSourceAction.value) { pendingSourceAction.value = null; return true }; return false },
+})
 onBeforeUnmount(closeSource)
 </script>
 
@@ -440,15 +466,16 @@ onBeforeUnmount(closeSource)
       </div>
       <div class="screenshot-annotation-image-info"><span :title="sourceName">{{ sourceName }}</span><span>{{ sourceWidth }} × {{ sourceHeight }}</span></div>
     </div>
-    <div v-else class="screenshot-annotation-empty"><Pencil :size="23" /><strong>打开图片，或先截取屏幕</strong><span>支持 PNG、JPG、WebP、GIF、BMP；所有标注都在本机完成。</span></div>
+    <div v-else class="screenshot-annotation-empty"><Pencil :size="23" /><strong>打开图片，或先截取屏幕</strong><span>支持 PNG、JPG、WebP、GIF、BMP；动画输入仅取静态一帧，所有标注都在本机完成。</span></div>
 
     <div class="screenshot-annotation-export">
-      <button class="primary-button" :disabled="busy || !sourceBitmap" @click="saveAnnotatedImage"><Save :size="14" /> 保存标注 PNG</button>
-      <button class="secondary-button" :disabled="busy || !sourceBitmap || sourceWidth * sourceHeight > maxClipboardPixels" @click="copyAnnotatedImage"><ClipboardCopy :size="14" /> 复制图片</button>
+      <button class="primary-button" :disabled="busy || !sourceBitmap || !!pendingTextPoint || isDrawing" @click="saveAnnotatedImage"><Save :size="14" /> 保存标注 PNG</button>
+      <button class="secondary-button" :disabled="busy || !sourceBitmap || !!pendingTextPoint || isDrawing || sourceWidth * sourceHeight > maxClipboardPixels" @click="copyAnnotatedImage"><ClipboardCopy :size="14" /> 复制图片</button>
       <span v-if="sourceBitmap && sourceWidth * sourceHeight > maxClipboardPixels">复制上限 1,200 万像素</span>
     </div>
+    <p v-if="pendingTextPoint" class="form-hint">请先添加或取消待编辑文字，之后才能保存或复制；定位圆不会进入导出图片。</p>
     <p v-if="error" class="inline-error">{{ error }}</p>
     <p v-else-if="message" class="screenshot-annotation-message" role="status"><Check :size="13" /> {{ message }}</p>
-    <p class="screenshot-annotation-footnote">标注会合并进导出的 PNG；另存为新文件，不覆盖输入图片。屏幕捕获需要你在选择器中选取画面，工具窗口会短暂隐藏。</p>
+    <p class="screenshot-annotation-footnote">标注会合并进导出的 PNG；另存到本地子目录的新文件，不覆盖已有文件；不支持盘符根目录或网络路径。屏幕捕获需要你在选择器中选取画面，工具窗口会短暂隐藏。</p>
   </div>
 </template>

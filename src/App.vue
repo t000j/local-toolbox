@@ -21,8 +21,11 @@ import { categoryLabels, tools } from './tools/registry'
 import type { ToolDefinition } from './tools/types'
 import UpdaterPanel from './app/UpdaterPanel.vue'
 import { useUpdater } from './app/updater'
+import { activeLeaveGuard, pendingNavigation, navigationSaving, navigationError, requestToolNavigation, cancelToolNavigation, discardAndNavigate, saveAndNavigate } from './app/toolNavigation'
+import { timerSession, stopSessionTicker } from './tools/timerSession'
 import { restoredKeys, settingsRestoredEvent } from './app/settingsEvents'
 
+const { countdownRunning, countdownFinished, countdownNoticeDismissed, countdownDisplay, formatCountdown, stopwatchRunning } = timerSession
 const favoriteKey = 'toolbox:favorites:v1'
 const query = ref('')
 const selectedCategory = ref<'all' | 'favorites' | ToolDefinition['category']>('all')
@@ -97,17 +100,15 @@ function readFavorites(): string[] {
 }
 
 function chooseCategory(category: typeof selectedCategory.value): void {
-  selectedCategory.value = category
-  activeToolId.value = null
-  query.value = ''
+  requestToolNavigation(() => { selectedCategory.value = category; activeToolId.value = null; query.value = '' })
 }
 
 function openTool(toolId: string): void {
-  activeToolId.value = toolId
+  if (activeToolId.value !== toolId) requestToolNavigation(() => { activeToolId.value = toolId })
 }
 
 function closeTool(): void {
-  activeToolId.value = null
+  requestToolNavigation(() => { activeToolId.value = null })
 }
 
 function toggleFavorite(toolId: string): void {
@@ -117,6 +118,10 @@ function toggleFavorite(toolId: string): void {
 }
 
 function onKeydown(event: KeyboardEvent): void {
+  if (event.defaultPrevented) return
+  if (pendingNavigation.value) { if (event.key === 'Escape') { event.preventDefault(); cancelToolNavigation() }; return }
+  if (event.key === 'Escape' && activeLeaveGuard.value?.escape?.()) { event.preventDefault(); return }
+  if (document.querySelector('[role="dialog"][aria-modal="true"]') && !updatePanelOpen.value) return
   if (updatePanelOpen.value) {
     if (event.key === 'Escape' && updater.status.value !== 'installing') updatePanelOpen.value = false
     return
@@ -132,7 +137,7 @@ function onSettingsRestored(event: Event): void {
   if (restoredKeys(event).includes(favoriteKey)) favorites.value = readFavorites()
 }
 onMounted(() => { window.addEventListener('keydown', onKeydown); window.addEventListener(settingsRestoredEvent, onSettingsRestored); void updater.initialize() })
-onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown); window.removeEventListener(settingsRestoredEvent, onSettingsRestored); updater.dispose() })
+onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown); window.removeEventListener(settingsRestoredEvent, onSettingsRestored); updater.dispose(); stopSessionTicker() })
 </script>
 
 <template>
@@ -198,6 +203,10 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown); window
         </div>
       </section>
 
+      <section v-if="countdownRunning || (countdownFinished && !countdownNoticeDismissed) || stopwatchRunning" class="update-notice" aria-label="本次会话计时" :role="countdownFinished && !countdownNoticeDismissed ? 'alert' : 'status'">
+        <div class="update-notice-copy"><strong>{{ countdownFinished && !countdownNoticeDismissed ? '倒计时时间到' : countdownRunning ? `倒计时 ${formatCountdown(countdownDisplay)}` : '秒表正在计时' }}</strong><p>切换工具会继续计时；关闭应用后结束。提醒仅在应用内显示。</p></div>
+        <div class="update-notice-actions"><button class="secondary-button" @click="openTool('stopwatch-countdown')">查看计时器</button><button v-if="countdownFinished && !countdownNoticeDismissed" class="quiet-button" @click="countdownNoticeDismissed = true">知道了</button></div>
+      </section>
       <section class="content-area">
         <template v-if="!activeTool">
           <div class="welcome-row">
@@ -298,6 +307,19 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown); window
         </template>
       </section>
     </main>
+    <div v-if="pendingNavigation" class="rename-confirm-backdrop" role="presentation" @keydown.esc.stop.prevent="cancelToolNavigation">
+      <section class="rename-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="leave-tool-title">
+        <h2 id="leave-tool-title">{{ pendingNavigation.guard.label }}</h2>
+        <p>{{ pendingNavigation.guard.busy?.() ? '当前操作仍在处理，请等待完成后再离开。' : '有未保存的编辑。离开会丢弃这些更改。' }}</p>
+        <p v-if="!pendingNavigation.guard.save" class="form-hint">需要保存时，请继续编辑并使用本页的预览和确认流程。</p>
+        <p v-if="navigationError" class="inline-error" role="alert">{{ navigationError }}</p>
+        <div class="rename-confirm-actions">
+          <button class="secondary-button" :disabled="navigationSaving" @click="cancelToolNavigation">继续编辑</button>
+          <button v-if="pendingNavigation.guard.save" class="primary-button" :disabled="navigationSaving || pendingNavigation.guard.busy?.()" @click="saveAndNavigate">保存并离开</button>
+          <button class="quiet-button" :disabled="navigationSaving || pendingNavigation.guard.busy?.()" @click="discardAndNavigate">放弃并离开</button>
+        </div>
+      </section>
+    </div>
     <UpdaterPanel :open="updatePanelOpen" @close="updatePanelOpen = false" />
   </div>
 </template>
