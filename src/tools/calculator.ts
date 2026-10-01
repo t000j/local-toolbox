@@ -96,4 +96,3 @@ export function formatNumber(value: number): string {
   const rounded = Number(value.toPrecision(12))
   return (Number.isFinite(rounded) ? rounded : value).toString()
 }
-
