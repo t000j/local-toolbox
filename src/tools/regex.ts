@@ -16,9 +16,9 @@ export function testRegex({ pattern, flags, input }: RegexRequest): RegexResult 
   let bytes = 0
   let truncated = false
   while (true) {
-    if (matches.length >= regexLimits.matches) { truncated = true; break }
     const match = regex.exec(input)
     if (!match) break
+    if (matches.length >= regexLimits.matches) { truncated = true; break }
     // Check a conservative bound before serialization, including repeated captured text.
     let estimate = 128
     for (const value of match) estimate += (value?.length ?? 0) * 6 + 8

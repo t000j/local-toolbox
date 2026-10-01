@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { Calculator as CalculatorIcon, Check, Clock, Copy, Delete } from '@lucide/vue'
 import { copyText } from '../clipboard'
 
-type Token = { type: 'number' | 'operator' | 'left' | 'right'; value: string }
+import { evaluate, formatNumber } from '../calculator'
 interface HistoryItem { id: number; expression: string; result: string }
 
 const expression = ref('')
@@ -29,100 +29,6 @@ const liveResult = computed(() => {
     return ''
   }
 })
-
-function tokenize(source: string): Token[] {
-  const normalized = source.replace(/×/g, '*').replace(/÷/g, '/')
-  const tokens: Token[] = []
-  let position = 0
-  while (position < normalized.length) {
-    const character = normalized[position]
-    if (/\s/.test(character)) {
-      position++
-      continue
-    }
-    const number = normalized.slice(position).match(/^(?:\d+(?:\.\d*)?|\.\d+)/)
-    if (number) {
-      tokens.push({ type: 'number', value: number[0] })
-      position += number[0].length
-    } else if ('+-*/'.includes(character)) {
-      tokens.push({ type: 'operator', value: character })
-      position++
-    } else if (character === '(' || character === ')') {
-      tokens.push({ type: character === '(' ? 'left' : 'right', value: character })
-      position++
-    } else {
-      throw new Error(`不支持字符“${character}”。`)
-    }
-    if (tokens.length > 200) throw new Error('表达式过长，请分步计算。')
-  }
-  return tokens
-}
-
-function evaluate(source: string): number {
-  if (source.length > 300) throw new Error('表达式过长，请分步计算。')
-  const tokens = tokenize(source)
-  if (!tokens.length) throw new Error('请输入要计算的表达式。')
-  let position = 0
-
-  function parsePrimary(): number {
-    const token = tokens[position]
-    if (token?.type === 'number') {
-      position++
-      const value = Number(token.value)
-      if (!Number.isFinite(value)) throw new Error('数字超出可计算范围。')
-      return value
-    }
-    if (token?.type === 'left') {
-      position++
-      const value = parseExpression()
-      if (tokens[position]?.type !== 'right') throw new Error('括号没有配对。')
-      position++
-      return value
-    }
-    throw new Error('这里需要数字或左括号。')
-  }
-
-  function parseUnary(): number {
-    const token = tokens[position]
-    if (token?.type === 'operator' && (token.value === '+' || token.value === '-')) {
-      position++
-      const value = parseUnary()
-      return token.value === '-' ? -value : value
-    }
-    return parsePrimary()
-  }
-
-  function parseTerm(): number {
-    let value = parseUnary()
-    while (tokens[position]?.type === 'operator' && ['*', '/'].includes(tokens[position].value)) {
-      const operator = tokens[position++].value
-      const right = parseUnary()
-      if (operator === '/' && right === 0) throw new Error('除数不能为零。')
-      value = operator === '*' ? value * right : value / right
-    }
-    return value
-  }
-
-  function parseExpression(): number {
-    let value = parseTerm()
-    while (tokens[position]?.type === 'operator' && ['+', '-'].includes(tokens[position].value)) {
-      const operator = tokens[position++].value
-      const right = parseTerm()
-      value = operator === '+' ? value + right : value - right
-    }
-    return value
-  }
-
-  const result = parseExpression()
-  if (position < tokens.length) throw new Error(tokens[position].type === 'right' ? '括号没有配对。' : '运算符之间缺少数字。')
-  if (!Number.isFinite(result)) throw new Error('结果超出可计算范围。')
-  return result
-}
-
-function formatNumber(value: number): string {
-  if (value === 0) return '0'
-  return Number(value.toPrecision(12)).toString()
-}
 
 function calculate(): void {
   error.value = ''
@@ -215,7 +121,7 @@ function clearHistory(): void {
           <span v-else>{{ key.label }}</span>
         </button>
       </div>
-      <p class="calculator-footnote">支持 +、−、×、÷、括号和小数；按 Enter 计算。结果显示 12 位有效数字，历史记录保留在本次会话中。</p>
+      <p class="calculator-footnote">支持 +、−、×、÷、括号、小数和 e 科学计数法；按 Enter 计算。结果显示 12 位有效数字，历史记录仅保留在当前工具页。</p>
     </section>
 
     <aside class="calculator-history-panel">

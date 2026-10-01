@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { ArrowLeftRight, Check, Copy, Ruler } from '@lucide/vue'
 import { copyText } from '../clipboard'
+import { convertUnit, formatUnitValue } from '../unitConversion'
 
 type UnitGroupId = 'length' | 'mass' | 'area' | 'volume' | 'speed' | 'temperature' | 'data'
 interface UnitDefinition { id: string; label: string; factor?: number }
@@ -54,16 +55,15 @@ const error = ref('')
 const activeGroup = computed(() => groups.find((group) => group.id === groupId.value) ?? groups[0])
 const fromDefinition = computed(() => activeGroup.value.units.find((unit) => unit.id === fromUnit.value) ?? activeGroup.value.units[0])
 const toDefinition = computed(() => activeGroup.value.units.find((unit) => unit.id === toUnit.value) ?? activeGroup.value.units[1])
-const convertedValue = computed(() => {
-  const numericAmount = Number(amount.value)
-  if (!amount.value.trim() || !Number.isFinite(numericAmount)) return null
-  if (groupId.value === 'temperature') {
-    const celsius = fromUnit.value === 'c' ? numericAmount : fromUnit.value === 'f' ? (numericAmount - 32) * 5 / 9 : numericAmount - 273.15
-    return toUnit.value === 'c' ? celsius : toUnit.value === 'f' ? celsius * 9 / 5 + 32 : celsius + 273.15
-  }
-  return numericAmount * (fromDefinition.value.factor ?? 1) / (toDefinition.value.factor ?? 1)
+const conversion = computed(() => {
+  if (!amount.value.trim()) return { text: '', error: '' }
+  try {
+    return { text: formatUnitValue(convertUnit(amount.value, groupId.value === 'temperature', fromDefinition.value, toDefinition.value)), error: '' }
+  } catch (cause) { return { text: '', error: cause instanceof Error ? cause.message : '无法换算。' } }
 })
-const formattedResult = computed(() => convertedValue.value === null ? '' : new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 8 }).format(convertedValue.value))
+const formattedResult = computed(() => conversion.value.text)
+let revision = 0
+watch([amount, fromUnit, toUnit, groupId], () => { revision++; copied.value = false; error.value = '' }, { flush: 'sync' })
 
 watch(groupId, (nextGroupId) => {
   const nextGroup = groups.find((group) => group.id === nextGroupId) ?? groups[0]
@@ -82,12 +82,14 @@ function swapUnits(): void {
 
 async function copyResult(): Promise<void> {
   if (!formattedResult.value) return
+  const version = revision
   try {
     await copyText(formattedResult.value)
+    if (version !== revision) return
     copied.value = true
     window.setTimeout(() => { copied.value = false }, 1600)
   } catch {
-    error.value = '复制失败，请检查剪贴板权限。'
+    if (version === revision) error.value = '复制失败，请检查剪贴板权限。'
   }
 }
 </script>
@@ -112,7 +114,7 @@ async function copyResult(): Promise<void> {
         <select id="unit-to" v-model="toUnit" class="unit-select" @change="copied = false"><option v-for="unit in activeGroup.units" :key="unit.id" :value="unit.id">{{ unit.label }}</option></select>
       </section>
     </div>
-    <p v-if="error" class="inline-error">{{ error }}</p>
-    <p v-else class="form-hint"><Check :size="14" /> 当前换算在本机完成。</p>
+    <p v-if="error || conversion.error" class="inline-error">{{ error || conversion.error }}</p>
+    <p v-else class="form-hint"><Check :size="14" /> 本机浮点近似换算；显示及复制最多 15 位有效数字，小量使用科学计数法，溢出/下溢会报错。</p>
   </div>
 </template>

@@ -1,3 +1,4 @@
+import { parseSafeJson } from './safeJson'
 import { exec, type JsonValue, type Path } from 'jsonpath-rfc9535'
 import { jsonPathLimits, type JsonPathMatch, type JsonPathRequest, type JsonPathResponse } from './jsonPathTypes'
 
@@ -38,7 +39,7 @@ scope.onmessage = (event) => {
     if (encoder.encode(input).byteLength > jsonPathLimits.inputBytes) throw new Error('JSON 输入超过 1 MiB。')
     if (!expression.trim() || expression.length > jsonPathLimits.expressionLength) throw new Error('请输入不超过 2000 个字符的 JSONPath。')
     let data: JsonValue
-    try { data = JSON.parse(input) as JsonValue }
+    try { data = parseSafeJson(input) as JsonValue }
     catch (cause) { throw new Error(`JSON 语法错误：${cause instanceof Error ? cause.message : '请检查输入。'}`) }
     validateInput(data)
     const matches: JsonPathMatch[] = []

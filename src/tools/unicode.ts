@@ -52,7 +52,7 @@ export function encodeUnicode(value: string, format: UnicodeFormat = 'utf16'): s
 }
 
 export function decodeUnicode(value: string): string {
-  checkInput(value)
+  if (value.length > UNICODE_OUTPUT_LIMIT) throw new Error('转义输入最多 600,000 字符。')
   const parts: string[] = []
   for (let index = 0; index < value.length;) {
     if (value[index] !== '\\') { parts.push(value[index++]!); continue }
@@ -77,6 +77,8 @@ export function decodeUnicode(value: string): string {
       parts.push(String.fromCharCode(Number.parseInt(digits, 16))); index += 4
     }
   }
-  // Decoding never expands this input; lone fixed-width surrogates are intentionally preserved.
-  return parts.join('')
+  // Lone fixed-width surrogates are intentionally preserved; decoded text retains its own budget.
+  const result = parts.join('')
+  checkInput(result)
+  return result
 }

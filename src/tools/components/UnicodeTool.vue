@@ -69,7 +69,7 @@ onBeforeUnmount(() => { revision++ })
     <div class="tool-action-row">
       <p class="form-hint" :class="{ 'hint-error': error }" aria-live="polite">
         {{ error || (ready ? (rows.length ? '处理完成。' : '输入为空：结果为空，字符数为 0。')
-          : '本机处理，不保存、不联网。输入上限 100,000 个 UTF-16 码元，输出上限 600,000 字符。Ctrl+Enter 处理。') }}
+          : '本机处理，不保存、不联网。原文/解码结果最多 100,000 个 UTF-16 码元；转义输入/输出最多 600,000 字符。Ctrl+Enter 处理。') }}
       </p>
       <button class="primary-button" @click="convert">{{ mode === 'view' ? '查看字符' : mode === 'encode' ? '编码' : '解码' }}</button>
     </div>
